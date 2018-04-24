@@ -1,0 +1,31 @@
+<launch>
+
+  <!-- Launching USB CAM launch files and Dynamixel controllers -->
+  <include file="$(find face_tracker_pkg)/launch/start_tracking.launch"/>
+
+  <!-- Launch transforms -->
+  <include file="$(find face_tracker_pkg)/launch/static_transforms.launch.xml"/>
+
+  <!-- Starting face tracker nodes -->
+
+  <group ns="right_eye">
+    <include file="$(find face_tracker_control)/launch/start_dynamixel.launch"/>
+    
+    <node name="face_controller" pkg="face_tracker_control" type="face_tracker_control" output="screen"/>
+
+    <node name="motor_state" pkg="face_tracker_control" type="motor_state_broadcaster" output="screen">
+      <param name="eye_link" value="left_eye_link"/>
+    </node>
+  </group>
+
+  <group ns="left_eye">
+    <include file="$(find face_tracker_control)/launch/start_dynamixel.launch"/>
+
+    <node name="face_controller" pkg="face_tracker_control" type="face_tracker_control" output="screen"/>
+
+    <node name="motor_state" pkg="face_tracker_control" type="motor_state_broadcaster" output="screen">
+      <param name="eye_link" value="left_eye_link"/>
+    </node>
+  </group>
+
+</launch>

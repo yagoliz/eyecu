@@ -1,0 +1,2 @@
+servomaxx: 1.0   #max degree servo horizontal (x) can turn
+servomaxy: 1.0
