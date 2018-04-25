@@ -9,7 +9,7 @@
 #include <motor_state_broadcaster.h>
 
 
-MotorStateBroadcaster::MotorStateBroadcaster() {
+MotorStateBroadcaster::MotorStateBroadcaster(ros::NodeHandle nh, ros::NodeHandle nhp) {
 
   pan_topic  = "pan_controller/state" ;
   tilt_topic = "tilt_controller/state";
@@ -27,17 +27,17 @@ MotorStateBroadcaster::MotorStateBroadcaster() {
   gaze_z = 0.00;
 
   try {
-    nh.getParam("pan_topic" , pan_topic );
-    nh.getParam("tilt_topic", tilt_topic);
-    nh.getParam("eye_link"  , eye_link  );
-    nh.getParam("tilt_link" , tilt_link );
-    nh.getParam("gaze_link" , gaze_link );
-    nh.getParam("tilt_x" , tilt_x);
-    nh.getParam("tilt_y" , tilt_y);
-    nh.getParam("tilt_z" , tilt_z);
-    nh.getParam("gaze_x" , gaze_x);
-    nh.getParam("gaze_y" , gaze_y);
-    nh.getParam("gaze_z" , gaze_z);
+    nhp.getParam("pan_topic" , pan_topic );
+    nhp.getParam("tilt_topic", tilt_topic);
+    nhp.getParam("eye_link"  , eye_link  );
+    nhp.getParam("tilt_link" , tilt_link );
+    nhp.getParam("gaze_link" , gaze_link );
+    nhp.getParam("tilt_x" , tilt_x);
+    nhp.getParam("tilt_y" , tilt_y);
+    nhp.getParam("tilt_z" , tilt_z);
+    nhp.getParam("gaze_x" , gaze_x);
+    nhp.getParam("gaze_y" , gaze_y);
+    nhp.getParam("gaze_z" , gaze_z);
   }
   catch (int e) {
     ROS_WARN("Parameters are not properly loaded from file, loading defaults");
@@ -102,7 +102,9 @@ int main(int argc, char **argv) {
   ros::init(argc, argv, "motor_state_broadcaster");
 
   // Initialize Motor broadcaster object
-  MotorStateBroadcaster msc;
+  ros::NodeHandle nh;
+  ros::NodeHandle nhp("~");
+  MotorStateBroadcaster msc(nh, nhp);
 
   //  Spin node
   ros::spin();

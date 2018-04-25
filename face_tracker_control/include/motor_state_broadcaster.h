@@ -29,7 +29,6 @@ typedef message_filters::sync_policies::ApproximateTime<dynamixel_msgs::JointSta
 
 class MotorStateBroadcaster {
 
-  ros::NodeHandle nh;
   message_filters::Subscriber<dynamixel_msgs::JointState> pan_subscriber;
   message_filters::Subscriber<dynamixel_msgs::JointState> tilt_subscriber;
 
@@ -45,7 +44,7 @@ class MotorStateBroadcaster {
   float gaze_x, gaze_y, gaze_z;
 
 public:
-  MotorStateBroadcaster();
+  MotorStateBroadcaster(ros::NodeHandle nh, ros::NodeHandle nhp);
   ~MotorStateBroadcaster() {;}
 
   void callback(const dynamixel_msgs::JointStateConstPtr& pan, const dynamixel_msgs::JointStateConstPtr& tilt);

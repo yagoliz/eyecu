@@ -1,25 +1,25 @@
-pan_controller:
+left_eye/pan_controller:
   controller:
     package: dynamixel_controllers
     module: joint_position_controller
     type: JointPositionController
-  joint_name: pan_joint
+  joint_name: left_eye/pan_joint
   joint_speed: 0.8
   motor:
-    id: 7
+    id: 2
     init: 512
     min: 0
     max: 1023
 
-tilt_controller:
+left_eye/tilt_controller:
   controller:
     package: dynamixel_controllers
     module: joint_position_controller
     type: JointPositionController
-  joint_name: tilt_joint
+  joint_name: left_eye/tilt_joint
   joint_speed: 0.8
   motor:
-      id: 8
+      id: 3
       init: 512
       min: 0
       max: 1023
