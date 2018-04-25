@@ -39,15 +39,8 @@ include_directories(
   include
 )
 
-
-add_executable(face_tracker_node src/face_tracker_node.cpp)
-target_link_libraries(face_tracker_node
-   ${catkin_LIBRARIES}
-   ${OpenCV_LIBRARIES}
- )
-
- add_executable(face_tracker_node_v2 src/face_tracker_node_v2.cpp)
- target_link_libraries(face_tracker_node_v2
+ add_executable(face_tracker_node src/face_tracker_node.cpp)
+ target_link_libraries(face_tracker_node
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
   )

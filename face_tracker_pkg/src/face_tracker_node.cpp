@@ -26,23 +26,20 @@
 * This code will track the faces using ROS
 */
 
-#include <iostream>
-#include <string>
-#include <stdio.h>
+/*
+ * This code has been modified to calculate the distance of the face to the camera frame
+ * and return the position in camera coordinates:
+ * X+: Pointing to the right of the image
+ * Y+: Pointing downwards
+ * Z+: Pointing to the screen
+ * For any questions email: yagol@mit.edu
+*/
 
-//Open-CV headers
-#include "opencv2/imgproc.hpp"
-#include "opencv2/highgui.hpp"
-#include "opencv2/objdetect.hpp"
+// Average face dimensions: https://en.wikipedia.org/wiki/Human_head
+#define FACE_WIDTH 13.9 // cm
+#define FACE_HEIGHT 22.5 // cm
 
-//ROS headers
-#include <ros/ros.h>
-#include <image_transport/image_transport.h>
-#include <cv_bridge/cv_bridge.h>
-#include <sensor_msgs/image_encodings.h>
-
-//Centroid message headers
-#include <face_tracker_pkg/centroid.h>
+#include <face_tracker_node.h>
 
 //OpenCV window name
 static const std::string OPENCV_WINDOW = "raw_image_window";
@@ -52,226 +49,203 @@ static const std::string OPENCV_WINDOW_1 = "face_detector";
 using namespace std;
 using namespace cv;
 
-class Face_Detector
+Face_Detector::Face_Detector(): it_(nh_)
 {
-  ros::NodeHandle nh_;
-  image_transport::ImageTransport it_;
-  image_transport::Subscriber image_sub_;
-  image_transport::Publisher image_pub_;
-
-  ros::Publisher face_centroid_pub;
-
-  face_tracker_pkg::centroid face_centroid;
-
-  string input_image_topic, output_image_topic, haar_file_face;
-  int face_tracking, center_offset, screenmaxx;
-
-  bool display_original_image, display_tracking_image;
-
-
-public:
-  Face_Detector()
-    : it_(nh_)
-  {
-
-
   //Loading Default values
 
-
-  input_image_topic = "/usb_cam/image_raw";
-  output_image_topic = "/face_detector/raw_image";
+  base_input_topic = "/usb_cam/image_raw";
   haar_file_face = "/home/yago/opencv/data/haarcascades/haarcascade_frontalface_alt.xml";
   face_tracking = 1;
   display_original_image = false;
   display_tracking_image = true;
-  screenmaxx = 640;
   center_offset = 100;
 
   //Accessing parameters from track.yaml
-
   try{
-  nh_.getParam("image_input_topic", input_image_topic);
-  nh_.getParam("face_detected_image_topic", output_image_topic);
-  // nh_.getParam("haar_file_face", haar_file_face);
-  nh_.getParam("face_tracking", face_tracking);
-  nh_.getParam("display_original_image", display_original_image);
-  nh_.getParam("display_tracking_image", display_tracking_image);
-  nh_.getParam("center_offset", center_offset);
-  nh_.getParam("screenmaxx", screenmaxx);
+    nh_.getParam("base_input_topic", base_input_topic);
+    nh_.getParam("face_detected_image_topic", output_image_topic);
+    nh_.getParam("haar_file_face", haar_file_face);
+    nh_.getParam("face_tracking", face_tracking);
+    nh_.getParam("display_original_image", display_original_image);
+    nh_.getParam("display_tracking_image", display_tracking_image);
+    nh_.getParam("center_offset", center_offset);
 
-  ROS_INFO("Successfully Loaded tracking parameters");
+    ROS_INFO("Successfully Loaded tracking parameters");
   }
 
   catch(int e)
   {
-
-      ROS_WARN("Parameters are not properly loaded from file, loading defaults");
-
+    ROS_WARN("Parameters are not properly loaded from file, loading defaults");
   }
 
-    // Subscribe to input video feed and publish output video feed
-    image_sub_ = it_.subscribe(input_image_topic, 1,
-      &Face_Detector::imageCb, this);
-    image_pub_ = it_.advertise(output_image_topic, 1);
+  // CamInfo = ros::topic::waitForMessage("/usb_cam/camera_info", ros::Duration(2));
 
-    face_centroid_pub = nh_.advertise<face_tracker_pkg::centroid>("/face_centroid",10);
+  // Subscribe to input video feed and publish output video feed
+  camera_sub_ = it_.subscribeCamera(base_input_topic, 1,
+    &Face_Detector::imageCb, this);
+  image_pub_ = it_.advertise(output_image_topic, 1);
 
-
-  }
-
-  ~Face_Detector()
-  {
-    if( display_original_image == 1 or display_tracking_image == 1)
-    cv::destroyAllWindows();
-  }
-
-  void imageCb(const sensor_msgs::ImageConstPtr& msg)
-  {
-
-    cv_bridge::CvImagePtr cv_ptr;
-    namespace enc = sensor_msgs::image_encodings;
-
-    try
-    {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
-    }
-    catch (cv_bridge::Exception& e)
-    {
-      ROS_ERROR("cv_bridge exception: %s", e.what());
-      return;
-    }
-
-
-    // string cascadeName = haar_file_face;
-    CascadeClassifier cascade;
-    if( !cascade.load( haar_file_face ) )
-    {
-      cerr << "ERROR: Could not load classifier cascade" << endl;
-      return;
-    }
-
-
-    if (display_original_image){
-      imshow("Original Image", cv_ptr->image);
-    }
-
-    detectAndDraw( cv_ptr->image, cascade );
-
-    image_pub_.publish(cv_ptr->toImageMsg());
-
-    waitKey(30);
-
+  face_distance_pub = nh_.advertise<face_tracker_pkg::DistanceCamera>("/face_distance",10);
 }
 
-void detectAndDraw( Mat& img, CascadeClassifier& cascade)
+Face_Detector::~Face_Detector()
 {
-    double t = 0;
-    double scale = 1;
-    vector<Rect> faces, faces2;
-    const static Scalar colors[] =
-    {
-        Scalar(255,0,0),
-        Scalar(255,128,0),
-        Scalar(255,255,0),
-        Scalar(0,255,0),
-        Scalar(0,128,255),
-        Scalar(0,255,255),
-        Scalar(0,0,255),
-        Scalar(255,0,255)
-    };
-    Mat gray, smallImg;
-
-    cvtColor( img, gray, COLOR_BGR2GRAY );
-    double fx = 1 / scale ;
-    resize( gray, smallImg, Size(), fx, fx, INTER_LINEAR );
-    equalizeHist( smallImg, smallImg );
-
-    t = (double)cvGetTickCount();
-    cascade.detectMultiScale( smallImg, faces,
-        1.1, 15, 0
-        |CASCADE_SCALE_IMAGE,
-        Size(30, 30) );
-
-    t = (double)cvGetTickCount() - t;
-
-    for ( size_t i = 0; i < faces.size(); i++ )
-    {
-        Rect r = faces[i];
-        Mat smallImgROI;
-        vector<Rect> nestedObjects;
-        Point center;
-        Scalar color = colors[i%8];
-        int radius;
-
-        double aspect_ratio = (double)r.width/r.height;
-        if( 0.75 < aspect_ratio && aspect_ratio < 1.3 )
-        {
-            center.x = cvRound((r.x + r.width*0.5)*scale);
-            center.y = cvRound((r.y + r.height*0.5)*scale);
-            radius = cvRound((r.width + r.height)*0.25*scale);
-            circle( img, center, radius, color, 3, 8, 0 );
-
-   	    face_centroid.x = center.x;
-   	    face_centroid.y = center.y;
-
-
-            //Publishing centroid of detected face
-  	    face_centroid_pub.publish(face_centroid);
-
-        }
-        else
-            rectangle( img, cvPoint(cvRound(r.x*scale), cvRound(r.y*scale)),
-                       cvPoint(cvRound((r.x + r.width-1)*scale), cvRound((r.y + r.height-1)*scale)),
-                       color, 3, 8, 0);
-
-    }
-
-    //Adding lines and left | right sections
-
-    Point pt1, pt2,pt3,pt4,pt5,pt6;
-
-    //Center line
-    pt1.x = screenmaxx / 2;
-    pt1.y = 0;
-
-    pt2.x = screenmaxx / 2;
-    pt2.y = 480;
-
-
-    //Left center threshold
-    pt3.x = (screenmaxx / 2) - center_offset;
-    pt3.y = 0;
-
-    pt4.x = (screenmaxx / 2) - center_offset;
-    pt4.y = 480;
-
-    //Right center threshold
-    pt5.x = (screenmaxx / 2) + center_offset;
-    pt5.y = 0;
-
-    pt6.x = (screenmaxx / 2) + center_offset;
-    pt6.y = 480;
-
-
-    line(img,  pt1,  pt2, Scalar(0, 0, 255),0.2);
-    line(img,  pt3,  pt4, Scalar(0, 255, 0),0.2);
-    line(img,  pt5,  pt6, Scalar(0, 255, 0),0.2);
-
-
-    putText(img, "Left", cvPoint(50,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255,0,0), 2, CV_AA);
-    putText(img, "Center", cvPoint(280,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(0,0,255), 2, CV_AA);
-    putText(img, "Right", cvPoint(480,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255,0,0), 2, CV_AA);
-
-    if (display_tracking_image){
-
-    	imshow( "Face tracker", img );
-     }
-
+  if( display_original_image == 1 or display_tracking_image == 1)
+    cv::destroyAllWindows();
 }
 
 
 
-};
+void Face_Detector::imageCb(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::CameraInfoConstPtr& Cinfo)
+{
+
+  cv_bridge::CvImagePtr cv_ptr;
+
+  screenmaxx = Cinfo->width;
+  screenmaxy = Cinfo->height;
+
+  center.x = (double)screenmaxx/2;
+  center.y = (double)screenmaxy/2;
+
+  fx = Cinfo->K[0];
+  cx = Cinfo->K[2];
+  fy = Cinfo->K[4];
+  cy = Cinfo->K[5];
+
+  try
+  {
+    cv_ptr = cv_bridge::toCvCopy(img, sensor_msgs::image_encodings::BGR8);
+  }
+  catch (cv_bridge::Exception& e)
+  {
+    ROS_ERROR("cv_bridge exception: %s", e.what());
+    return;
+  }
+
+
+  // string cascadeName = haar_file_face;
+  CascadeClassifier cascade;
+  if( !cascade.load( haar_file_face ) )
+  {
+    cerr << "ERROR: Could not load classifier cascade" << endl;
+    return;
+  }
+
+
+  if (display_original_image){
+    imshow("Original Image", cv_ptr->image);
+  }
+
+  detectAndDraw( cv_ptr->image, cascade );
+
+  image_pub_.publish(cv_ptr->toImageMsg());
+
+  waitKey(30);
+}
+
+void Face_Detector::detectAndDraw( Mat& img, CascadeClassifier& cascade)
+{
+  double t = 0;
+  double scale = 1;
+  vector<Rect> faces;
+  const static Scalar colors[] =
+  {
+      Scalar(255,0,0),
+      Scalar(255,128,0),
+      Scalar(255,255,0),
+      Scalar(0,255,0),
+      Scalar(0,128,255),
+      Scalar(0,255,255),
+      Scalar(0,0,255),
+      Scalar(255,0,255)
+  };
+  Mat gray, smallImg;
+
+  cvtColor( img, gray, COLOR_BGR2GRAY );
+  double f = 1 / scale ;
+  resize( gray, smallImg, Size(), f, f, INTER_LINEAR );
+  equalizeHist( smallImg, smallImg );
+
+  t = (double)cvGetTickCount();
+  cascade.detectMultiScale( smallImg, faces,
+      1.1, 15, 0
+      |CASCADE_SCALE_IMAGE,
+      Size(30, 30) );
+
+  t = (double)cvGetTickCount() - t;
+
+  // for ( size_t i = 0; i < faces.size(); i++ )
+  if (faces.size() > 0)
+  {
+      Rect r = faces[0];
+      Scalar color = colors[0];
+
+      center_face.x = r.x + r.width /2;
+      center_face.y = r.y + r.height/2;
+
+      opposite.x = r.x + r.width ;
+      opposite.y = r.y + r.height;
+
+      face_distance.Z = (pow(fx*FACE_WIDTH, 2) + pow(fy*FACE_HEIGHT, 2)) /
+          (((opposite.x-r.x)*fx*FACE_WIDTH) + ((opposite.y-r.y)*fy*FACE_HEIGHT));
+
+      face_distance.X = (center_face.x - center.x) * face_distance.Z/fx;
+      face_distance.Y = (center_face.y - center.y) * face_distance.Z/fy;
+
+      face_distance_pub.publish(face_distance);
+
+      rectangle(img, Point(r.x, r.y), opposite, color, 1, CV_AA);
+  }
+  else
+  {
+    face_distance.X = 0;
+    face_distance.Y = 0;
+    face_distance.Z = 0;
+  }
+
+  //Adding lines and left | right sections
+
+  Point pt1, pt2,pt3,pt4,pt5,pt6;
+
+  //Center line
+  pt1.x = screenmaxx / 2;
+  pt1.y = 0;
+
+  pt2.x = screenmaxx / 2;
+  pt2.y = screenmaxy;
+
+
+  //Left center threshold
+  pt3.x = (screenmaxx / 2) - center_offset;
+  pt3.y = 0;
+
+  pt4.x = (screenmaxx / 2) - center_offset;
+  pt4.y = screenmaxy;
+
+  //Right center threshold
+  pt5.x = (screenmaxx / 2) + center_offset;
+  pt5.y = 0;
+
+  pt6.x = (screenmaxx / 2) + center_offset;
+  pt6.y = screenmaxy;
+
+
+  line(img,  pt1,  pt2, Scalar(0, 0, 255),0.2);
+  line(img,  pt3,  pt4, Scalar(0, 255, 0),0.2);
+  line(img,  pt5,  pt6, Scalar(0, 255, 0),0.2);
+
+
+  putText(img, "Left", cvPoint(50,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255,0,0), 2, CV_AA);
+  putText(img, "Center", cvPoint(280,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(0,0,255), 2, CV_AA);
+  putText(img, "Right", cvPoint(480,240), FONT_HERSHEY_SIMPLEX, 1, cvScalar(255,0,0), 2, CV_AA);
+
+  if (display_tracking_image)
+  {
+  	imshow( "Face tracker", img );
+  }
+
+}
+
 
 int main(int argc, char** argv)
 {

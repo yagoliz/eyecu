@@ -39,26 +39,16 @@ catkin_package(
 
 )
 
-
-
 include_directories(
   ${catkin_INCLUDE_DIRS}
   include
 )
 
-
-
-# add_executable(face_tracker_controller src/face_tracker_controller.cpp)
-# add_executable(face_tracker_controller_v2 src/face_tracker_controller_v2.cpp)
 add_executable(face_tracker_control src/face_tracker_control.cpp)
 add_executable(motor_state_broadcaster src/motor_state_broadcaster.cpp)
 
-# add_dependencies(face_tracker_controller ${${PROJECT_NAME}_EXPORTED_TARGETS})
-# add_dependencies(face_tracker_controller_v2 ${${PROJECT_NAME}_EXPORTED_TARGETS})
 add_dependencies(face_tracker_control ${${PROJECT_NAME}_EXPORTED_TARGETS})
 add_dependencies(motor_state_broadcaster ${${PROJECT_NAME}_EXPORTED_TARGETS})
 
-# target_link_libraries(face_tracker_controller ${catkin_LIBRARIES})
-# target_link_libraries(face_tracker_controller_v2 ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
 target_link_libraries(face_tracker_control ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
 target_link_libraries(motor_state_broadcaster ${catkin_LIBRARIES} ${Eigen3_LIBRARIES})
