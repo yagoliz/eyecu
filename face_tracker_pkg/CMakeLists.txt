@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(face_tracker_pkg)
 
+add_subdirectory($ENV{HOME}/cmake_workspace/dlib-19.10/dlib dlib_build)
+
 find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
@@ -44,3 +46,10 @@ include_directories(
     ${catkin_LIBRARIES}
     ${OpenCV_LIBRARIES}
   )
+
+  add_executable(face_tracker_node_dlib src/face_tracker_node_dlib.cpp)
+  target_link_libraries(face_tracker_node_dlib
+     ${catkin_LIBRARIES}
+     ${OpenCV_LIBRARIES}
+     dlib::dlib
+   )

@@ -9,6 +9,6 @@
 <!-- Starting face tracker node -->
    <rosparam file="$(find face_tracker_pkg)/config/track.yaml" command="load"/>
 
-   <node name="face_tracker" pkg="face_tracker_pkg" type="face_tracker_node_v2" output="screen"/>
+   <node name="face_tracker" pkg="face_tracker_pkg" type="face_tracker_node_dlib" output="screen"/>
 
 </launch>
