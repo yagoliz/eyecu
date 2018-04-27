@@ -59,7 +59,7 @@ class Face_Detector
   dlib::image_window win;
 
   // Camera values
-  int face_tracking, center_offset, screenmaxx, screenmaxy;
+  int screenmaxx, screenmaxy;
 
   Point2f center, center_face, opposite;
 

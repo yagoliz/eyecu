@@ -13,11 +13,6 @@
 
 #include <face_tracker_node_dlib.h>
 
-//OpenCV window name
-static const std::string OPENCV_WINDOW = "raw_image_window";
-static const std::string OPENCV_WINDOW_1 = "face_detector";
-
-
 using namespace std;
 using namespace cv;
 
@@ -26,19 +21,17 @@ Face_Detector::Face_Detector(): it_(nh_)
   //Loading Default values
 
   base_input_topic = "/usb_cam/image_raw";
-  face_tracking = 1;
   display_original_image = false;
   display_tracking_image = true;
   center_offset = 100;
 
   //Accessing parameters from track.yaml
-  try{
+  try
+  {
     nh_.getParam("base_input_topic", base_input_topic);
     nh_.getParam("face_detected_image_topic", output_image_topic);
-    nh_.getParam("face_tracking", face_tracking);
     nh_.getParam("display_original_image", display_original_image);
     nh_.getParam("display_tracking_image", display_tracking_image);
-    nh_.getParam("center_offset", center_offset);
 
     ROS_INFO("Successfully Loaded tracking parameters");
   }
@@ -92,7 +85,8 @@ void Face_Detector::imageCb(const sensor_msgs::ImageConstPtr& img, const sensor_
     return;
   }
 
-  if (display_original_image){
+  if (display_original_image)
+  {
     imshow("Original Image", cv_ptr->image);
   }
 
@@ -135,7 +129,7 @@ void Face_Detector::detectAndDraw( Mat& img)
       opposite.y = r.top () + r.height();
 
       face_distance.Z = (pow(fx*FACE_WIDTH, 2) + pow(fy*FACE_HEIGHT, 2)) /
-          (((opposite.x-r.left())*fx*FACE_WIDTH) + ((opposite.y-r.top())*fy*FACE_HEIGHT));
+          (((opposite.x-r.)*fx*FACE_WIDTH) + ((opposite.y-r.top())*fy*FACE_HEIGHT));
 
       face_distance.X = (center_face.x - center.x) * face_distance.Z/fx;
       face_distance.Y = (center_face.y - center.y) * face_distance.Z/fy;
@@ -150,10 +144,12 @@ void Face_Detector::detectAndDraw( Mat& img)
     face_distance.Z = 0;
   }
 
-  win.clear_overlay();
-  win.set_image(cimg);
-  win.add_overlay(faces, dlib::rgb_pixel(0, 0, 255));
-
+  if (display_tracking_image)
+  {
+    win.clear_overlay();
+    win.set_image(cimg);
+    win.add_overlay(faces, dlib::rgb_pixel(0, 0, 255));
+  }
 }
 
 
