@@ -23,7 +23,6 @@ Face_Detector::Face_Detector(): it_(nh_)
   base_input_topic = "/usb_cam/image_raw";
   display_original_image = false;
   display_tracking_image = true;
-  center_offset = 100;
 
   //Accessing parameters from track.yaml
   try
@@ -129,7 +128,7 @@ void Face_Detector::detectAndDraw( Mat& img)
       opposite.y = r.top () + r.height();
 
       face_distance.Z = (pow(fx*FACE_WIDTH, 2) + pow(fy*FACE_HEIGHT, 2)) /
-          (((opposite.x-r.)*fx*FACE_WIDTH) + ((opposite.y-r.top())*fy*FACE_HEIGHT));
+          (((opposite.x-r.left())*fx*FACE_WIDTH) + ((opposite.y-r.top())*fy*FACE_HEIGHT));
 
       face_distance.X = (center_face.x - center.x) * face_distance.Z/fx;
       face_distance.Y = (center_face.y - center.y) * face_distance.Z/fy;
