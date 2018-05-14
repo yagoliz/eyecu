@@ -17,13 +17,16 @@ import cv2
 
 from imutils.video import WebcamVideoStream
 
-cap = WebcamVideoStream(src=1).start()
+import rospkg
+
+cap = WebcamVideoStream(src='/dev/front_camera').start()
 # cap = cv2.VideoCapture(0)
 cv2.namedWindow("object_detection", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("object_detection",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
 
 # This is needed since the notebook is stored in the object_detection folder.
-sys.path.insert(0, "/home/yago/Documents/test")
+rospack = rospkg.RosPack()
+sys.path.insert(0, rospack.get_path('face_tracker_tensorflow'))
 from utils import label_map_util
 from utils import visualization_utils as vis_util
 
@@ -46,13 +49,14 @@ from utils import visualization_utils as vis_util
 # By default we use an "SSD with Mobilenet" model here. See the [detection model zoo](https://github.com/tensorflow/models/blob/master/object_detection/g3doc/detection_model_zoo.md) for a list of other models that can be run out-of-the-box with varying speeds and accuracies.
 
 # What model to download.
-MODEL_NAME = 'exported_graphs'
+MODEL_NAME = '/exported_graphs'
+LABELS = '/labels'
 
 # Path to frozen detection graph. This is the actual model that is used for the object detection.
-PATH_TO_CKPT = MODEL_NAME + '/frozen_inference_graph_face.pb'
+PATH_TO_CKPT = sys.path[0] + MODEL_NAME + '/frozen_inference_graph_face.pb'
 
 # List of the strings that is used to add correct label for each box.
-PATH_TO_LABELS = os.path.join('labels', 'face_label_map.pbtxt')
+PATH_TO_LABELS = sys.path[0] + LABELS + '/face_label_map.pbtxt'
 
 NUM_CLASSES = 2
 
@@ -86,6 +90,7 @@ with detection_graph.as_default():
       image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
       # Each box represents a part of the image where a particular object was detected.
       boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
+
       # Each score represent how level of confidence for each of the objects.
       # Score is shown on the result image, together with the class label.
       scores = detection_graph.get_tensor_by_name('detection_scores:0')
