@@ -6,7 +6,7 @@ left_eye/pan_controller:
   joint_name: left_eye/pan_joint
   joint_speed: 0.8
   motor:
-    id: 2
+    id: 5
     init: 512
     min: 0
     max: 1023
@@ -19,7 +19,7 @@ left_eye/tilt_controller:
   joint_name: left_eye/tilt_joint
   joint_speed: 0.8
   motor:
-      id: 3
+      id: 6
       init: 512
       min: 0
       max: 1023

@@ -6,7 +6,7 @@
             namespace: dxl_manager
             serial_ports:
                 eye_port:
-                    port_name: "/dev/ttyUSB0"
+                    port_name: "/dev/eye_usb"
                     baud_rate: 1000000
                     min_motor_id: 1
                     max_motor_id: 25

@@ -1,0 +1,3 @@
+KERNEL=="ttyUSB[0-9]*", SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", MODE="0666", SYMLINK+="eye_usb"
+
+KERNEL=="video[0-9]*", SUBSYSTEM=="video4linux", ATTRS{idVendor}=="046d", ATTRS{idProduct}=="0843", ATTRS{serial}=="981DA87E", MODE="0666", SYMLINK+="front_camera"
