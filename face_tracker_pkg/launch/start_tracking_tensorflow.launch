@@ -1,0 +1,6 @@
+<launch>
+
+<!-- Launch tensorflow based face tracker -->
+<node pkg="face_tracker_tensorflow" type="face_tracker_tensorflow_standalone.py" name="face_tracker"/>
+
+</launch>

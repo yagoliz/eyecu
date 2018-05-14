@@ -1,0 +1,32 @@
+<launch>
+
+  <!-- Launch tracker -->
+  <include file="$(find face_tracker_pkg)/launch/start_tracking_tensorflow.launch"/>
+
+  <!-- Launch transforms -->
+  <include file="$(find face_tracker_pkg)/launch/static_transforms.launch.xml"/>
+
+  <!-- Starting face tracker nodes -->
+  <include file="$(find face_tracker_control)/launch/start_dynamixel.launch"/>
+
+  <group ns="right_eye">
+    <node name="face_controller" pkg="face_tracker_control" type="face_tracker_control" output="screen"/>
+
+    <node name="motor_state" pkg="face_tracker_control" type="motor_state_broadcaster" output="screen">
+      <param name="eye_link" value="right_eye_link"/>
+      <param name="tilt_link" value="right_eye_tilt_link"/>
+      <param name="gaze_link" value="right_eye_gaze_link"/>
+    </node>
+  </group>
+
+  <group ns="left_eye">
+    <node name="face_controller" pkg="face_tracker_control" type="face_tracker_control" output="screen"/>
+
+    <node name="motor_state" pkg="face_tracker_control" type="motor_state_broadcaster" output="screen">
+      <param name="eye_link" value="left_eye_link"/>
+      <param name="tilt_link" value="left_eye_tilt_link"/>
+      <param name="gaze_link" value="left_eye__gazelink"/>
+    </node>
+  </group>
+
+</launch>

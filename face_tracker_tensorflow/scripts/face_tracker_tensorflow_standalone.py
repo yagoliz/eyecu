@@ -39,6 +39,10 @@ from utils import visualization_utils as vis_util
 class FaceTensorFlow:
   # Initialization function
   def __init__(self):
+    # These variables define the average width and height of human face (in cm)
+    self.face_width  = 13.9
+    self.face_height = 22.5
+
     # Get ROS parameters
     self._published_topic = rospy.get_param('published_topic', '/face_distance')
     self._video_device = rospy.get_param('video_device', '/dev/front_camera')
@@ -46,6 +50,9 @@ class FaceTensorFlow:
     self._graph_name  = rospy.get_param('graph_name', '/frozen_inference_graph_face.pb')
     self._label_name  = rospy.get_param('label_name', '/face_label_map.pbtxt')
     self._num_classes = rospy.get_param('num_classes', 2)
+
+    self._min_score = rospy.get_param('min_score', 0.5)
+    self._display_image = rospy.get_param('display_image', True)
 
     # Tensorflow initialization
     self._path_to_ckpt = sys.path[0] + '/exported_graphs' + self._graph_name
@@ -70,7 +77,12 @@ class FaceTensorFlow:
     self._fy = 507.2559728776117
     self._cy = 239.1426526245542
     self._width  = 640
+    self.center_x = self._width/2
     self._height = 480
+    self.center_y = self._height/2
+
+    # Publisher variable
+    self.face_distance = DistanceCamera()
 
     # Subscribers and publishers
     self._pub = rospy.Publisher(self._published_topic, DistanceCamera, queue_size=1)
@@ -115,7 +127,34 @@ class FaceTensorFlow:
           use_normalized_coordinates=True,
           line_thickness=8)
 
-    cv2.imshow('object_detection', image_np)
+    if self._display_image:
+      cv2.imshow('object_detection', image_np)
+
+    self.publish_face_distance(np.squeeze(boxes), np.squeeze(scores))
+
+  def publish_face_distance(self, boxes, scores):
+
+    max_face = -1
+    # We pick the biggest face we find
+    for i in range(boxes.shape[0]):
+      if scores[i] > self._min_score:
+        max_face = i
+
+    if max_face >= 0:
+      xmin = boxes[max_face][1]*self._width
+      xmax = boxes[max_face][3]*self._width
+      ymin = boxes[max_face][0]*self._height
+      ymax = boxes[max_face][2]*self._height
+
+      center_face_x = (xmax + xmin) / 2
+      center_face_y = (ymax + ymin) / 2
+
+      self.face_distance.Z = ((self._fx*self.face_width)**2 + (self._fy*self.face_height)**2)/(((xmax-xmin)*self._fx*self.face_width) + ((ymax-ymin)*self._fy*self.face_height))
+
+      self.face_distance.X = (center_face_x - self.center_x) * self.face_distance.Z/self._fx
+      self.face_distance.Y = (center_face_y - self.center_y) * self.face_distance.Z/self._fy
+
+      self._pub.publish(self.face_distance)
 
 
 ################################################################################
