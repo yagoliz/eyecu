@@ -76,14 +76,7 @@ class FaceTensorFlow:
     self._cap = WebcamVideoStream(src=self._video_device).start()
 
     # Load values for calibration
-    self._fx = 507.5024270566367
-    self._cx = 322.7029200800868
-    self._fy = 507.2559728776117
-    self._cy = 239.1426526245542
-    self._width  = 640
-    self.center_x = self._width/2
-    self._height = 480
-    self.center_y = self._height/2
+    self.load_camera_info()
 
     # Publisher variable
     self.face_distance = DistanceCamera()
@@ -99,6 +92,44 @@ class FaceTensorFlow:
         serialized_graph = fid.read()
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
+
+  def load_camera_info(self):
+
+    try:
+      f = open(self._camera_info_path)
+      with f as stream:
+          try:
+              data = yaml.load(stream)
+              matrix = data['camera_matrix']['data']
+              self._fx = matrix[0]
+              self._cx = matrix[2]
+              self._fy = matrix[4]
+              self._cy = matrix[5]
+              self._width = data['image_width']
+              self.center_x = self._width/2
+              self._height  = data['image_height']
+              self.center_y = self._height/2
+
+              print(self._fx)
+          except yaml.YAMLError:
+              print('Error loading in yaml file. Loading default values')
+              self.load_default()
+
+    except IOError:
+      print('Error opening file. Loading default values')
+      self.load_defaults()
+
+  def load_defaults(self):
+
+    self._fx = 507.5024270566367
+    self._cx = 322.7029200800868
+    self._fy = 507.2559728776117
+    self._cy = 239.1426526245542
+    self._width  = 640
+    self.center_x = self._width/2
+    self._height = 480
+    self.center_y = self._height/2
+    print('Defaults loaded correctly')
 
   # Image subscriber definition
   def detect_faces(self):
