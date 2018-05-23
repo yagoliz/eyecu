@@ -1,7 +1,10 @@
 <launch>
 
   <!-- Launch tracker -->
-  <include file="$(find eyecu)/launch/start_tracking_tensorflow.launch"/>
+  <include file="$(find eyecu)/launch/eyecu_tensorflow.launch"/>
+
+  <!-- Launch serial communication with arduino -->
+  <include file="$(find eyecu)/launch/arduino_connect.launch"/>
 
   <!-- Launch transforms -->
   <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>

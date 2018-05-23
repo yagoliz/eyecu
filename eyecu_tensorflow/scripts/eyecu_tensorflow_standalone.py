@@ -47,7 +47,7 @@ class FaceTensorFlow:
 
     # Get ROS parameters
     self._published_topic = rospy.get_param('published_topic', '/face_distance')
-    self._video_device = rospy.get_param('~video_device', '/dev/video0')
+    self._video_device = rospy.get_param('video_device', '/dev/front_camera')
 
     self._graph_name  = rospy.get_param('graph_name', '/frozen_inference_graph_face.pb')
     self._label_name  = rospy.get_param('label_name', '/face_label_map.pbtxt')
@@ -160,6 +160,9 @@ class FaceTensorFlow:
 
       self._pub.publish(self.face_distance)
 
+  def stop_reading(self):
+    self._cap.stop()
+
 
 ################################################################################
 # Main function
@@ -176,5 +179,6 @@ if __name__ == '__main__':
 
     if cv2.waitKey(25) & 0xFF == ord('q'):
       # out.release()
+      tensor.stop_reading()
       cv2.destroyAllWindows()
       break
