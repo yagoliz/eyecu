@@ -25,13 +25,30 @@ ros::NodeHandle nh;
 
 uint8_t colors[3][3] = {{1, 1, 1}, {1, 1, 0}, {0, 1, 0}};
 uint8_t r, g, b;
+int color_prev[3] = {0, 0, 0};
 bool neutral = true;
 
 int intensity = 0;
 
+bool all_equal(int *prev_msgs){
+
+  for (int i=0; i < 2; i++)
+  {
+    if (prev_msgs[i] != prev_msgs[i+1])
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
 void locationCb(const std_msgs::Int8& msg_in)
 {
-  if (!(msg_in.data < 0 || msg_in.data > 2)) {
+  color_prev[0] = color_prev[1];
+  color_prev[1] = color_prev[2];
+  color_prev[2] = msg_in.data;
+  
+  if (all_equal(color_prev)) {
   
     r = colors[msg_in.data][0];
     g = colors[msg_in.data][1];

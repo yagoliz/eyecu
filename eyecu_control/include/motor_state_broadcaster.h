@@ -14,6 +14,7 @@
 
 // Ros header files
 #include <ros/ros.h>
+#include <std_msgs/Int8.h>
 #include <std_msgs/Float64.h>
 #include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/TransformStamped.h>
@@ -32,10 +33,14 @@ class MotorStateBroadcaster {
   message_filters::Subscriber<dynamixel_msgs::JointState> pan_subscriber;
   message_filters::Subscriber<dynamixel_msgs::JointState> tilt_subscriber;
 
+  ros::Publisher pub;
+  std_msgs::Int8 detection;
+
   geometry_msgs::TransformStamped transform_pan, transform_tilt;
 
   std::string pan_topic, tilt_topic;
   std::string eye_link, tilt_link, gaze_link;
+  std::string arduino_topic;
 
   message_filters::Synchronizer<SyncPolicy> *sync;
 

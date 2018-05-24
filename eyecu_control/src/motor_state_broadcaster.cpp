@@ -18,6 +18,9 @@ MotorStateBroadcaster::MotorStateBroadcaster(ros::NodeHandle nh, ros::NodeHandle
   tilt_link = "tilt_link";
   gaze_link = "gaze_link";
 
+  arduino_topic = "/face_found";
+
+  // Position of the dynamixel frames
   tilt_x =  0.02;
   tilt_y =  0.00;
   tilt_z = -0.04;
@@ -26,6 +29,7 @@ MotorStateBroadcaster::MotorStateBroadcaster(ros::NodeHandle nh, ros::NodeHandle
   gaze_y = 0.00;
   gaze_z = 0.00;
 
+  // Try to get private parameters
   try {
     nhp.getParam("pan_topic" , pan_topic );
     nhp.getParam("tilt_topic", tilt_topic);
@@ -38,10 +42,15 @@ MotorStateBroadcaster::MotorStateBroadcaster(ros::NodeHandle nh, ros::NodeHandle
     nhp.getParam("gaze_x" , gaze_x);
     nhp.getParam("gaze_y" , gaze_y);
     nhp.getParam("gaze_z" , gaze_z);
+    nhp.getParam("arduino_topic", arduino_topic);
   }
   catch (int e) {
     ROS_WARN("Parameters are not properly loaded from file, loading defaults");
   }
+
+  pub = nh.advertise<std_msgs::Int8>(arduino_topic, 10);
+  detection.data = 0;
+  pub.publish(detection);
 
   pan_subscriber.subscribe (nh, pan_topic , 1);
   tilt_subscriber.subscribe(nh, tilt_topic, 1);
@@ -81,9 +90,9 @@ void MotorStateBroadcaster::callback(const dynamixel_msgs::JointStateConstPtr& p
   transform_tilt.header.frame_id = tilt_link;
   transform_tilt.child_frame_id  = gaze_link;
 
-  transform_tilt.transform.translation.x = tilt_x*cos(tilt_angle);
-  transform_tilt.transform.translation.y = tilt_y                ;
-  transform_tilt.transform.translation.z = tilt_z*sin(tilt_angle);
+  transform_tilt.transform.translation.x = gaze_x*cos(tilt_angle);
+  transform_tilt.transform.translation.y = gaze_y                ;
+  transform_tilt.transform.translation.z = gaze_z*sin(tilt_angle);
 
   q.setRPY(0, tilt_angle, 0);
   transform_tilt.transform.rotation.x = q.x();
@@ -93,6 +102,19 @@ void MotorStateBroadcaster::callback(const dynamixel_msgs::JointStateConstPtr& p
 
   broadcaster.sendTransform(transform_tilt);
 
+  if (!(pan->is_moving && tilt->is_moving)) {
+    detection.data = 0;
+  }
+  else {
+    if ((pan->goal_pos - pan->current_pos) < 0.05 && (tilt->goal_pos - tilt->current_pos) < 0.05) {
+      detection.data = 2;
+    }
+    else{
+      detection.data = 1;
+    }
+  }
+
+  pub.publish(detection);
 }
 
 
