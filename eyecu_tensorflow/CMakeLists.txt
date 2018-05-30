@@ -9,6 +9,7 @@ project(eyecu_tensorflow)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   rospy
+  eyecu_msgs
 )
 
 ## System dependencies are found with CMake's conventions

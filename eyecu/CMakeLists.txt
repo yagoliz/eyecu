@@ -10,18 +10,25 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  message_generation
+  eyecu_msgs
+  pcl_conversions
+  pcl_ros
+  laser_geometry
+  message_filters
+  visualization_msgs
 )
 
 find_package(OpenCV REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS system)
 
+find_package (PCL REQUIRED)
+include_directories(include ${PCL_INCLUDE_DIRS})
+
 add_message_files(
    FILES
-   centroid.msg
    DistanceCamera.msg
- )
+)
 
 
 ## Generate added messages and services with any dependencies listed here
@@ -53,3 +60,8 @@ include_directories(
      ${OpenCV_LIBRARIES}
      dlib::dlib
    )
+
+   # add_executable(laser_image_projection src/laser_image_projection.cpp)
+   # target_link_libraries(single_camera
+   #   ${catkin_LIBRARIES}
+   # )

@@ -24,7 +24,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 
 // Custom msgs
-#include <eyecu/DistanceCamera.h>
+#include <eyecu_msgs/DistanceCamera.h>
 
 // Eigen namespace
 using namespace Eigen;
@@ -61,6 +61,6 @@ class FaceTracker {
     ~FaceTracker(){;}
 
     void track_face(double x, double y, double z);
-    void face_callback(const eyecu::DistanceCamera::ConstPtr& msg);
+    void face_callback(const eyecu_msgs::DistanceCamera::ConstPtr& msg);
 
 };

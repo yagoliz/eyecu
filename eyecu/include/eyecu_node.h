@@ -53,7 +53,7 @@
 #include <sensor_msgs/CameraInfo.h>
 
 //Centroid message headers
-#include <eyecu/DistanceCamera.h>
+#include <eyecu_msgs/DistanceCamera.h>
 
 using namespace std;
 using namespace cv;
@@ -69,7 +69,7 @@ class Face_Detector
   image_transport::Publisher image_pub_;
 
   ros::Publisher face_distance_pub;
-  eyecu::DistanceCamera face_distance;
+  eyecu_msgs::DistanceCamera face_distance;
 
   // Topic names and cascade file path
   string base_input_topic, output_image_topic, haar_file_face;

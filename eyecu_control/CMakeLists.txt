@@ -8,22 +8,15 @@ find_package(catkin REQUIRED COMPONENTS
   dynamixel_controllers
   roscpp
   rospy
-  message_generation
   std_msgs
   geometry_msgs
   tf2
   tf2_ros
   message_filters
+  eyecu_msgs
 )
 
 find_package(Eigen3 REQUIRED NO_MODULE)
-
-#find_package(catkin REQUIRED COMPONENTS message_generation std_msgs)
-
-add_message_files(DIRECTORY msg
-   FILES
-   centroid.msg
- )
 
 
 ## Generate added messages and services with any dependencies listed here
@@ -35,7 +28,7 @@ add_message_files(DIRECTORY msg
 
 
 catkin_package(
-  CATKIN_DEPENDS message_runtime dynamixel_controllers roscpp rospy std_msgs
+  CATKIN_DEPENDS dynamixel_controllers roscpp rospy std_msgs
 
 )
 
