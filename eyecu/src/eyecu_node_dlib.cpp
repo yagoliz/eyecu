@@ -28,7 +28,6 @@ Face_Detector::Face_Detector(): it_(nh_)
   try
   {
     nh_.getParam("base_input_topic", base_input_topic);
-    nh_.getParam("face_detected_image_topic", output_image_topic);
     nh_.getParam("display_original_image", display_original_image);
     nh_.getParam("display_tracking_image", display_tracking_image);
 
@@ -44,10 +43,10 @@ Face_Detector::Face_Detector(): it_(nh_)
   detector = dlib::get_frontal_face_detector();
 
   // Subscribe to input video feed and publish output video feed
-  camera_sub_ = it_.subscribeCamera(base_input_topic, 1,
+  camera_sub_ = it_.subscribe(base_input_topic, 1,
     &Face_Detector::imageCb, this);
 
-  face_distance_pub = nh_.advertise<eyecu_msgs::DistanceCamera>("/face_distance",10);
+  bbox_pub = nh_.advertise<eyecu_msgs::boundingBoxArray>("/bounding_boxes",10);
 }
 
 Face_Detector::~Face_Detector()
@@ -58,21 +57,10 @@ Face_Detector::~Face_Detector()
 
 
 
-void Face_Detector::imageCb(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::CameraInfoConstPtr& Cinfo)
+void Face_Detector::imageCb(const sensor_msgs::ImageConstPtr& img)
 {
 
   cv_bridge::CvImagePtr cv_ptr;
-
-  screenmaxx = Cinfo->width;
-  screenmaxy = Cinfo->height;
-
-  center.x = (double)screenmaxx/2;
-  center.y = (double)screenmaxy/2;
-
-  fx = Cinfo->K[0];
-  cx = Cinfo->K[2];
-  fy = Cinfo->K[4];
-  cy = Cinfo->K[5];
 
   try
   {
@@ -118,29 +106,23 @@ void Face_Detector::detectAndDraw( Mat& img)
   // for ( size_t i = 0; i < faces.size(); i++ )
   if (faces.size() > 0)
   {
-      dlib::rectangle r = faces[0];
-      Scalar color = colors[0];
+    eyecu_msgs::boundingBox bbox;
+    eyecu_msgs::boundingBoxArray bboxes;
 
-      center_face.x = r.left() + r.width ()/2;
-      center_face.y = r.top () + r.height()/2;
+    for (int i = 0; i < faces.size(); i++) {
+      dlib::rectangle r = faces[i];
 
-      opposite.x = r.left() + r.width ();
-      opposite.y = r.top () + r.height();
+      bbox.name = "face";
+      bbox.pointA.x = r.left  ();
+      bbox.pointA.y = r.top   ();
+      bbox.pointB.x = r.right ();
+      bbox.pointB.y = r.bottom();
 
-      face_distance.Z = (pow(fx*FACE_WIDTH, 2) + pow(fy*FACE_HEIGHT, 2)) /
-          (((opposite.x-r.left())*fx*FACE_WIDTH) + ((opposite.y-r.top())*fy*FACE_HEIGHT));
+      bboxes.boundingBoxes.push_back(bbox);
+    }
 
-      face_distance.X = (center_face.x - center.x) * face_distance.Z/fx;
-      face_distance.Y = (center_face.y - center.y) * face_distance.Z/fy;
+    bbox_pub.publish(bboxes);
 
-      face_distance_pub.publish(face_distance);
-
-  }
-  else
-  {
-    face_distance.X = 0;
-    face_distance.Y = 0;
-    face_distance.Z = 0;
   }
 
   if (display_tracking_image)

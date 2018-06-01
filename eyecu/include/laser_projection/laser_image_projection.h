@@ -1,3 +1,8 @@
+// LaserScan projection node
+// For any questions contact: yagol@mit.edu
+
+// Standard libraries
+
 #include <ros/ros.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>

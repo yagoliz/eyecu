@@ -1,14 +1,19 @@
 <launch>
 
 
-<!-- Launching USB CAM launch files and Dynamixel controllers -->
-
+  <!-- Launching USB CAM launch files and Dynamixel controllers -->
   <include file="$(find eyecu)/launch/start_usb_cam.launch"/>
 
+  <!-- Launch velodyne lidar -->
+  <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch"/>
 
-<!-- Starting face tracker node -->
+  <!-- Launch transforms -->
+  <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+
+  <!-- Starting face tracker node -->
    <rosparam file="$(find eyecu)/config/track.yaml" command="load"/>
-
    <node name="eyecu" pkg="eyecu" type="eyecu_node_dlib" output="screen"/>
+
+   <node name="pointcloud" pkg="eyecu" type="pointcloud_image_projection" output="screen"/>
 
 </launch>

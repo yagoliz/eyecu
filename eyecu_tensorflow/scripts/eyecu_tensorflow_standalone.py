@@ -24,7 +24,8 @@ import tensorflow as tf
 import rospy
 
 # Custom messages
-from eyecu_msgs.msg import DistanceCamera
+from eyecu_msgs.msg import boundingBox
+from eyecu_msgs.msg import boundingBoxArray
 
 # Path to this package
 import rospkg
@@ -41,12 +42,9 @@ from utils import visualization_utils as vis_util
 class FaceTensorFlow:
   # Initialization function
   def __init__(self):
-    # These variables define the average width and height of human face (in cm)
-    self.face_width  = 13.9
-    self.face_height = 22.5
 
     # Get ROS parameters
-    self._published_topic = rospy.get_param('published_topic', '/face_distance')
+    self._published_topic = rospy.get_param('published_topic', '/bounding_boxes')
     self._video_device = rospy.get_param('video_device', '/dev/front_camera')
 
     self._graph_name  = rospy.get_param('graph_name', '/frozen_inference_graph_face.pb')
@@ -78,11 +76,8 @@ class FaceTensorFlow:
     # Load values for calibration
     self.load_camera_info()
 
-    # Publisher variable
-    self.face_distance = DistanceCamera()
-
     # Subscribers and publishers
-    self._pub = rospy.Publisher(self._published_topic, DistanceCamera, queue_size=1)
+    self._pub = rospy.Publisher(self._published_topic, boundingBoxArray, queue_size=1)
 
   # Graph loading
   def load_graph(self):
@@ -93,27 +88,19 @@ class FaceTensorFlow:
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
 
-  def load_camera_info(self):
 
+  def load_camera_info(self):
     try:
       f = open(self._camera_info_path)
       with f as stream:
-          try:
-              data = yaml.load(stream)
-              matrix = data['camera_matrix']['data']
-              self._fx = matrix[0]
-              self._cx = matrix[2]
-              self._fy = matrix[4]
-              self._cy = matrix[5]
-              self._width = data['image_width']
-              self.center_x = self._width/2
-              self._height  = data['image_height']
-              self.center_y = self._height/2
+        try:
+          data = yaml.load(stream)
+          self._width = data['image_width']
+          self._height  = data['image_height']
 
-              print(self._fx)
-          except yaml.YAMLError:
-              print('Error loading in yaml file. Loading default values')
-              self.load_default()
+        except yaml.YAMLError:
+          print('Error loading in yaml file. Loading default values')
+          self.load_default()
 
     except IOError:
       print('Error opening file. Loading default values')
@@ -121,14 +108,8 @@ class FaceTensorFlow:
 
   def load_defaults(self):
 
-    self._fx = 507.5024270566367
-    self._cx = 322.7029200800868
-    self._fy = 507.2559728776117
-    self._cy = 239.1426526245542
     self._width  = 640
-    self.center_x = self._width/2
     self._height = 480
-    self.center_y = self._height/2
     print('Defaults loaded correctly')
 
   # Image subscriber definition
@@ -169,6 +150,9 @@ class FaceTensorFlow:
 
   def publish_face_distance(self, boxes, scores):
 
+    bbox = boundingBox()
+    bboxes = boundingBoxArray()
+
     max_face = -1
     # We pick the biggest face we find
     for i in range(boxes.shape[0]):
@@ -181,15 +165,15 @@ class FaceTensorFlow:
       ymin = boxes[max_face][0]*self._height
       ymax = boxes[max_face][2]*self._height
 
-      center_face_x = (xmax + xmin) / 2
-      center_face_y = (ymax + ymin) / 2
+      bbox.name = "face"
+      bbox.pointA.x = xmin
+      bbox.pointA.y = ymin
+      bbox.pointB.x = xmax
+      bbox.pointB.y = ymax
 
-      self.face_distance.Z = ((self._fx*self.face_width)**2 + (self._fy*self.face_height)**2)/(((xmax-xmin)*self._fx*self.face_width) + ((ymax-ymin)*self._fy*self.face_height))
+      bboxes = [bbox]
 
-      self.face_distance.X = (center_face_x - self.center_x) * self.face_distance.Z/self._fx
-      self.face_distance.Y = (center_face_y - self.center_y) * self.face_distance.Z/self._fy
-
-      self._pub.publish(self.face_distance)
+      self._pub.publish(bboxes)
 
   def stop_reading(self):
     self._cap.stop()

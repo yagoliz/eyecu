@@ -26,13 +26,13 @@
 //ROS headers
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
-#include <image_transport/camera_subscriber.h>
+#include <image_transport/subscriber.h>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/image_encodings.h>
-#include <sensor_msgs/CameraInfo.h>
 
-//Centroid message headers
-#include <eyecu_msgs/DistanceCamera.h>
+//Custom message headers
+#include <eyecu_msgs/boundingBox.h>
+#include <eyecu_msgs/boundingBoxArray.h>
 
 using namespace std;
 using namespace cv;
@@ -45,14 +45,12 @@ class Face_Detector
   ros::NodeHandle nh_;
 
   image_transport::ImageTransport it_;
-  image_transport::CameraSubscriber camera_sub_;
-  image_transport::Publisher image_pub_;
+  image_transport::Subscriber camera_sub_;
 
-  ros::Publisher face_distance_pub;
-  eyecu_msgs::DistanceCamera face_distance;
+  ros::Publisher bbox_pub;
 
   // Topic names and cascade file path
-  string base_input_topic, output_image_topic;
+  string base_input_topic;
 
   // dlib variables
   dlib::frontal_face_detector detector;
@@ -73,7 +71,7 @@ public:
 
   ~Face_Detector();
 
-  void imageCb(const sensor_msgs::ImageConstPtr& img, const sensor_msgs::CameraInfoConstPtr& Cinfo);
+  void imageCb(const sensor_msgs::ImageConstPtr& img);
 
   void detectAndDraw( Mat& img);
 
