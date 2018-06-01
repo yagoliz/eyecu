@@ -22,7 +22,7 @@ import tensorflow as tf
 
 # ROS libraries
 import rospy
-from std_msgs.msg import Header()
+from std_msgs.msg import Header
 from sensor_msgs.msg import Image, CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -75,14 +75,16 @@ class FaceTensorFlow:
 
     # OpenCV video capture
     self._cap = WebcamVideoStream(src=self._video_device).start()
-
-    # Load values for calibration
-    self.load_camera_info()
+    self._bridge = CvBridge()
+    self.CInfo = CameraInfo()
 
     # Subscribers and publishers
     self._pub = rospy.Publisher(self._published_topic, boundingBoxArray, queue_size=1)
     self._pub_image = rospy.Publisher(self._image_topic      , Image     , queue_size=1)
     self._pub_info  = rospy.Publisher(self._camera_info_topic, CameraInfo, queue_size=1)
+
+    # Load values for calibration
+    self.load_camera_info()
 
   # Graph loading
   def load_graph(self):
@@ -101,8 +103,6 @@ class FaceTensorFlow:
         try:
           data = yaml.load(stream)
           self.publish_info(data)
-          self._width = data['image_width']
-          self._height  = data['image_height']
 
         except yaml.YAMLError:
           print('Error loading in yaml file. Loading default values')
@@ -113,22 +113,17 @@ class FaceTensorFlow:
       self.load_defaults()
 
   def publish_info(self, data):
-    h = Header()
-    h.stamp = rospy.Time.now()
-    h.frame_id = self._frame_id
 
-    CInfo = CameraInfo()
-    CInfo.header = h
-    CInfo.height = self._height
-    CInfo.width  = self._width
-    CInfo.distortion_model = data['distortion_model']
-    CInfo.D = data['distortion_coefficients']['data']
-    CInfo.K = data['camera_matrix']['data']
-    CInfo.R = data['rectification_matrix']['data']
-    CInfo.P = data['projection_matrix']['data']
-
-    self._pub_info(CInfo)
-
+    self._width = data['image_width']
+    self._height  = data['image_height']
+    self.CInfo.height = self._height
+    self.CInfo.width  = self._width
+    self.CInfo.distortion_model = data['distortion_model']
+    self.CInfo.D = data['distortion_coefficients']['data']
+    self.CInfo.K = data['camera_matrix']['data']
+    self.CInfo.R = data['rectification_matrix']['data']
+    print(data['rectification_matrix']['data'])
+    self.CInfo.P = data['projection_matrix']['data']
 
   def load_defaults(self):
 
@@ -142,6 +137,7 @@ class FaceTensorFlow:
 
     with self._detection_graph.as_default():
       image_np = self._cap.read()
+      image_bridge = image_np
       # Expand dimensions since the model expects images to have shape: [1, None, None, 3]
       image_np_expanded = np.expand_dims(image_np, axis=0)
       image_tensor = self._detection_graph.get_tensor_by_name('image_tensor:0')
@@ -170,6 +166,22 @@ class FaceTensorFlow:
 
     if self._display_image:
       cv2.imshow('object_detection', image_np)
+
+    try:
+      image_ros = self._bridge.cv2_to_imgmsg(image_bridge, "bgr8")
+
+      h = Header()
+      h.stamp = rospy.Time.now()
+      h.frame_id = self._frame_id
+
+      image_ros.header = h
+      self.CInfo.header = h
+
+      self._pub_image.publish(image_ros)
+      self._pub_info.publish(self.CInfo)
+
+    except CvBridgeError as e:
+      print(e)
 
     self.publish_bboxes(np.squeeze(boxes), np.squeeze(scores))
 
@@ -208,8 +220,8 @@ class FaceTensorFlow:
 # Main function
 if __name__ == '__main__':
 
-  tensor = FaceTensorFlow()
   rospy.init_node('face_tracking_tensorflow', anonymous=True)
+  tensor = FaceTensorFlow()
 
   if tensor._display_image:
     cv2.namedWindow("object_detection", cv2.WND_PROP_FULLSCREEN)

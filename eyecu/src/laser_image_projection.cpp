@@ -29,9 +29,13 @@ LaserImageProjection::LaserImageProjection(ros::NodeHandle n):
     result_pub_ = it.advertise("result_image", 1);
   }
 
-  face_distance_pub = n.advertise<eyecu_msgs::DistanceCamera>("/face_distance", 1);
+  face_distance_pub_ = n.advertise<eyecu_msgs::DistanceCamera>("/face_distance", 1);
 
   image_pub_ = it.advertise("pub_image", 1);
+
+  face_distance_.X = 0;
+  face_distance_.Y = 0;
+  face_distance_.Z = 1;
 
   // Initialize sync policy and start callback
   first_time_ = true;
@@ -189,7 +193,7 @@ void LaserImageProjection::ProjectImage(MatrixXd &imagePoints,
       }
     }
   }
-  face_distance_pub.publish(face_distance_);
+  face_distance_pub_.publish(face_distance_);
 }
 
 void LaserImageProjection::putBoxOnRVIZ(int id, pcl::PointXYZ &point, std::string &str)
@@ -240,12 +244,12 @@ void LaserImageProjection::drawBoundingBox(cv::Mat& img, std::vector<DepthBox> &
 {
   for (int i = 0; i < list.size(); i++)
   {
-    if (display_ || pub_result_)
-    {
-      cv::rectangle(img, list[i].rect, cv::Scalar(255, 255, 0), 2, 4, 0);
-      cv::putText(img, list[i].name, cv::Point(list[i].rect.x, list[i].rect.y - 5),
-                  cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(100, 255, 0), 3, 8);
-    }
+    // if (display_ || pub_result_)
+    // {
+    //   cv::rectangle(img, list[i].rect, cv::Scalar(255, 255, 0), 2, 4, 0);
+    //   cv::putText(img, list[i].name, cv::Point(list[i].rect.x, list[i].rect.y - 5),
+    //               cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(100, 255, 0), 3, 8);
+    // }
     if(list[i].dis != -1 )
     {
       if (display_ || pub_result_)
@@ -321,25 +325,26 @@ void LaserImageProjection::callbackMethod ( const sensor_msgs::LaserScanConstPtr
 
   LaserImageProjection::laserProjection(cloud_pcl, imagePoints);
 
+  // Project pointcloud into image
   ProjectImage( imagePoints, cinfo_in, cloud_pcl, cv_ptr->image);
-  // cv::Mat combine_img;
-  // combine_img =  cv::Mat::zeros(cinfo_in->height, cinfo_in->width, CV_8UC3);
-  // cv_ptr->image.copyTo(combine_img(cv::Rect(0, 0, cv_ptr->image.cols, cv_ptr->image.rows)));
+
+  // Draw bounding boxes on image
   drawBoundingBox(cv_ptr->image, box_list_);
 
+  // Update times
   current_time_ = ros::Time::now();
   ros::Duration diff = current_time_ - past_time_;
 
-  std::string s = boost::lexical_cast<std::string>(1.0/diff.toSec()).substr(0, 4) + " fps" +
-                  "   detect rate: " +  boost::lexical_cast<std::string>(1.0/box_duration_.toSec()).substr(0, 4);
-  cv::putText(cv_ptr->image, s, cv::Point(20, 40),
-              cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 255, 255), 3, 8);
-  // std::cout << "fps: " << 1.0 / diff.toSec() << std::endl;
+  // Draw fps
+  // std::string s = boost::lexical_cast<std::string>(1.0/diff.toSec()).substr(0, 4) + " fps" +
+  //                 "   detect rate: " +  boost::lexical_cast<std::string>(1.0/box_duration_.toSec()).substr(0, 4);
+  // cv::putText(cv_ptr->image, s, cv::Point(20, 40),
+  //             cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 255, 255), 3, 8);
+
   past_time_ = current_time_;
-  //image_pub_.publish(pub_img.toImageMsg());
+
   if (pub_result_)
   {
-    // cv_bridge::CvImage pub_result_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", combine_img);
     result_pub_.publish(cv_ptr->toImageMsg());
   }
 

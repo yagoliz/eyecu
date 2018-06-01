@@ -4,7 +4,7 @@
   <include file="$(find eyecu)/launch/eyecu_tensorflow_standalone.launch"/>
 
   <!-- Launch serial communication with arduino -->
-  <include file="$(find eyecu)/launch/arduino_connect.launch"/>
+  <!-- <include file="$(find eyecu)/launch/arduino_connect.launch"/> -->
 
   <!-- Starting face tracker nodes -->
   <include file="$(find eyecu_control)/launch/start_dynamixel.launch"/>

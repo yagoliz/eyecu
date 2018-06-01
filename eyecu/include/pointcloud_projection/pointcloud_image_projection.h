@@ -44,6 +44,9 @@
 #include <eyecu_msgs/boundingBox.h>
 #include <eyecu_msgs/DistanceCamera.h>
 
+#define HEAT_MAX 20
+#define HEAT_MIN 0
+
 #define PI 3.14159265
 
 using namespace Eigen;
@@ -70,8 +73,13 @@ struct DepthBox{
 
 std::vector<DepthBox> box_list_;
 
+// Aditional variables
+static const std::string OPENCV_WINDOW = "Webcam";
+
 ros::Time box_past_time_, box_current_time_;
 ros::Duration box_duration_;
+
+bool display_;
 
 class PointcloudImageProjection
 {
@@ -95,10 +103,11 @@ class PointcloudImageProjection
       eyecu_msgs::DistanceCamera face_distance_;
       ros::Time past_time_, current_time_;
 
+      // Eigen variables
       MatrixXd camProjection_matrix_;
 
+      // ROS params
       bool first_time_, pub_marks_, pub_result_;
-      std::string face_distance_topic_;
 
       // Member function definitions
       PointcloudImageProjection(ros::NodeHandle n);
@@ -108,9 +117,15 @@ class PointcloudImageProjection
       void setTransformMatrix(const sensor_msgs::CameraInfoConstPtr& cinfo_in,
                               tf::StampedTransform c_tf);
 
-
       void laserProjection(pcl::PointCloud<pcl::PointXYZ> &cloud,
                             MatrixXd &imagePoints);
+
+      void callHeatMap(float value,
+                       float min,
+                       float max,
+                       int &r,
+                       int &g,
+                       int &b );
 
       void putBoxDistance(int &x,
                           int &y,
@@ -126,7 +141,7 @@ class PointcloudImageProjection
       void putBoxOnRVIZ(int id, pcl::PointXYZ &point,
                         std::string &str);
 
-      void drawBoundingBox(std::vector<DepthBox> &list);
+      void drawBoundingBox(cv::Mat& img, std::vector<DepthBox> &list);
 
       void callbackMethod(const sensor_msgs::PointCloud2ConstPtr& scan_in,
                           const sensor_msgs::ImageConstPtr& img_in,

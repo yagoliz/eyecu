@@ -72,7 +72,7 @@ struct DepthBox{
 
 std::vector<DepthBox> box_list_;
 
-// Aditional variab;es
+// Aditional variables
 static const std::string OPENCV_WINDOW = "Webcam";
 
 ros::Time box_past_time_, box_current_time_;
@@ -88,7 +88,7 @@ class LaserImageProjection
       ros::NodeHandle n_;
       laser_geometry::LaserProjection projector_;
       tf::TransformListener listener_;
-      ros::Publisher marker_pub, face_distance_pub;
+      ros::Publisher marker_pub, face_distance_pub_;
       image_transport::Publisher image_pub_, result_pub_;
 
       // Message synchronizing variables

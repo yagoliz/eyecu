@@ -11,6 +11,7 @@
   <!-- Launch transforms -->
   <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
 
-  <node name="laser_image" pkg="eyecu" type="laser_image_projection" output="screen"/>
+  <!-- Launch laser-image fusion node -->
+  <node name="laser_image" pkg="eyecu" type="pointcloud_image_projection" output="screen"/>
 
 </launch>

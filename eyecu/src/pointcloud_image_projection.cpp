@@ -8,20 +8,36 @@ PointcloudImageProjection::PointcloudImageProjection(ros::NodeHandle n):
 {
   // First we load the private parameters
   ros::NodeHandle nh_private("~");
+  nh_private.param<bool>("display", display_, false);
   nh_private.param<bool>("pub_marks", pub_marks_, true);
-  nh_private.param<std::string>("face_distance_topic", face_distance_topic_,"/face_distance");
+  nh_private.param<bool>("pub_result", pub_result_, true);
+  nh_private.param<bool>("display", display_, false);
 
   // We initialize the camera matrix
   initMatrix();
 
+  image_transport::ImageTransport it(n);
+
   // Show findings on RVIZ
-  if (true)
+  if (pub_marks_)
   {
-    marker_pub = n.advertise<visualization_msgs::Marker>("/object_show", 1);
+    marker_pub = n.advertise<visualization_msgs::Marker>("object_show", 1);
+  }
+  if (pub_result_)
+  {
+    result_pub_ = it.advertise("result_image", 1);
   }
 
-  face_distance_pub_ = n.advertise<eyecu_msgs::DistanceCamera>(face_distance_topic_, 1);
+  image_pub_ = it.advertise("pub_image", 1);
 
+  // Publish face distance
+  face_distance_pub_ = n.advertise<eyecu_msgs::DistanceCamera>("/face_distance", 1);
+
+  face_distance_.X = 0;
+  face_distance_.Y = 0;
+  face_distance_.Z = 1;
+
+  // Initialize sync policyand start callback
   first_time_ = true;
   sync_ = new message_filters::Synchronizer<SyncPolicy>
     ( SyncPolicy(10), pointcloud_sub_, image_sub_, cinfo_sub_);
@@ -33,13 +49,15 @@ PointcloudImageProjection::PointcloudImageProjection(ros::NodeHandle n):
 
 void PointcloudImageProjection::initMatrix()
 {
+  // Initialize projection matrix (3D -> 2D)
   camProjection_matrix_.resize(3, 4);
   camProjection_matrix_.setZero();
 }
 
 void PointcloudImageProjection::setTransformMatrix(const sensor_msgs::CameraInfoConstPtr& cinfo_in, tf::StampedTransform c_tf)
 {
-  // Declare the matrices for the Camera Projection Matrix
+  // This function is called once to calculate the actual projection matrix
+  // Declare matrices and variables
   MatrixXd projection_matrix;
   MatrixXd camTranslate_matrix;
   MatrixXd camRotate_matrix;
@@ -74,6 +92,7 @@ void PointcloudImageProjection::setTransformMatrix(const sensor_msgs::CameraInfo
   camRotate_matrix(2, 0) = -sin(yaw);
   camRotate_matrix(2, 2) =  cos(yaw);
 
+  // Computation of projection matrix
   camProjection_matrix_ = projection_matrix * camTranslate_matrix * camRotate_matrix;
 }
 
@@ -96,6 +115,17 @@ void PointcloudImageProjection::laserProjection( pcl::PointCloud<pcl::PointXYZ> 
     scanPoints(3, i) = 1;
   }
   imagePoints =  camProjection_matrix_ * scanPoints;
+}
+
+void PointcloudImageProjection::callHeatMap(float value, float min, float max, int &r, int &g, int &b )
+{
+  // This function colors points according to distance
+  float ratio = 2.0 * (float)(value-min) / (float)(max - min);
+  b = (int) 255*(1 - ratio);
+  if (b < 0) b = 0;
+  r = (int) 255*(ratio - 1);
+  if (r < 0) r = 0;
+  g = 255 - b - r;
 }
 
 void PointcloudImageProjection::putBoxDistance(int &x, int &y, double &distance, pcl::PointXYZ &point, std::vector<DepthBox> &list)
@@ -151,10 +181,16 @@ void PointcloudImageProjection::ProjectImage(MatrixXd &imagePoints,
       {
         x_shift = x;
         y_shift = y;
+
+        // Calculate the distance in 3D and call function to put the distance of the object
+        // in case there is any
+        double distance = sqrt(pow(cloud.points[i].x, 2) + pow(cloud.points[i].y, 2));
+        putBoxDistance(x_shift , y_shift, distance, cloud.points[i], box_list_);
+
+        // This function changes the color of pointcloud according to its distance
+        callHeatMap(distance, HEAT_MIN, HEAT_MAX, r, g, b);
+        cv::circle( img, cv::Point(x_shift, y_shift), 3, cv::Scalar(r, g, b), -1, 8 );
       }
-      double distance = sqrt(pow(cloud.points[i].x, 2) + pow(cloud.points[i].y, 2));
-      putBoxDistance(x_shift , y_shift, distance, cloud.points[i], box_list_);
-      cv::circle( img, cv::Point(x_shift, y_shift), 3, cv::Scalar(r, g, b), -1, 8 );
     }
   }
   face_distance_pub_.publish(face_distance_);
@@ -204,12 +240,24 @@ void PointcloudImageProjection::putBoxOnRVIZ(int id, pcl::PointXYZ &point, std::
   marker_pub.publish(marker);
 }
 
-void PointcloudImageProjection::drawBoundingBox(std::vector<DepthBox> &list)
+void PointcloudImageProjection::drawBoundingBox(cv::Mat& img, std::vector<DepthBox> &list)
 {
   for (int i = 0; i < list.size(); i++)
   {
+    // if (display_ || pub_result_)
+    // {
+    //   cv::rectangle(img, list[i].rect, cv::Scalar(255, 255, 0), 2, 4, 0);
+    //   cv::putText(img, list[i].name, cv::Point(list[i].rect.x, list[i].rect.y - 5),
+    //               cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(100, 255, 0), 3, 8);
+    // }
     if(list[i].dis != -1 )
     {
+      if (display_ || pub_result_)
+      {
+        std::string s = boost::lexical_cast<std::string>(list[i].dis).substr(0, 5) + " m";
+        cv::putText(img, s, cv::Point(list[i].rect.x + 5, list[i].rect.y + 30),
+                    cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 0, 255), 3, 8);
+      }
       if(pub_marks_)
       {
         putBoxOnRVIZ(i, list[i].point, list[i].name);
@@ -261,7 +309,7 @@ void PointcloudImageProjection::callbackMethod(const sensor_msgs::PointCloud2Con
   try
   {
     pcl::fromROSMsg(*cloud_in, cloud_pcl_prev);
-    pcl_ros::transformPointCloud("/camera_link", cloud_pcl_prev, cloud_pcl, listener_);
+    pcl_ros::transformPointCloud("/base_link", cloud_pcl_prev, cloud_pcl, listener_);
   }
   catch (tf::TransformException& e)
   {
@@ -280,20 +328,39 @@ void PointcloudImageProjection::callbackMethod(const sensor_msgs::PointCloud2Con
     return;
   }
 
+  cv_bridge::CvImage pub_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", cv_ptr->image);
+  image_pub_.publish(pub_img.toImageMsg());
+
   // Transform the pointcloud to image plane
   PointcloudImageProjection::laserProjection(cloud_pcl, imagePoints);
 
-  // Project points into image
+  /// Calculate points that fall into bounding boxes
   ProjectImage(imagePoints, cinfo_in, cloud_pcl, cv_ptr->image);
 
-  // Draw all the faces o RVIZ
-  drawBoundingBox(box_list_);
+  // Draw all the faces on RVIZ
+  drawBoundingBox(cv_ptr->image, box_list_);
 
   // Update times
   current_time_ = ros::Time::now();
   ros::Duration diff = current_time_ - past_time_;
 
+  // Draw fps
+  // std::string s = boost::lexical_cast<std::string>(1.0/diff.toSec()).substr(0, 4) + " fps" +
+  //                 "   detect rate: " +  boost::lexical_cast<std::string>(1.0/box_duration_.toSec()).substr(0, 4);
+  // cv::putText(cv_ptr->image, s, cv::Point(20, 40),
+  //             cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 255, 255), 3, 8);
   past_time_ = current_time_;
+
+  if (pub_result_)
+  {
+    result_pub_.publish(cv_ptr->toImageMsg());
+  }
+
+  if (display_)
+  {
+    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+    cv::waitKey(3);
+  }
 }
 
 // Function not belonging to the class defined above

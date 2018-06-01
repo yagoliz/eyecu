@@ -70,9 +70,9 @@ void FaceTracker::face_callback(const eyecu_msgs::DistanceCamera::ConstPtr& msg)
     ROS_INFO("Recieved X = [%f], Y = [%f], Z = [%f]", msg->X, msg->Y, msg->Z);
   }
 
-  t_in(0) =  msg->Z/100;
-  t_in(1) = -msg->X/100;
-  t_in(2) = -msg->Y/100;
+  t_in(0) =  msg->Z;
+  t_in(1) = -msg->X;
+  t_in(2) = -msg->Y;
 
   // std::cout << t_in << std::endl;
 
@@ -86,7 +86,7 @@ void FaceTracker::face_callback(const eyecu_msgs::DistanceCamera::ConstPtr& msg)
 
 void FaceTracker::track_face(double x, double y, double z) {
 
-  double phi   =  atan2(x,y) - PI/2;
+  double phi   = -atan2(y,x);
   double theta = -atan2(z,sqrt(pow(x,2)+pow(y,2)));
 
   // int sign_phi   = (int) (phi  /abs  (phi));

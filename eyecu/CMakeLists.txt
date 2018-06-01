@@ -52,6 +52,7 @@ include_directories(
    add_executable(pointcloud_image_projection src/pointcloud_image_projection.cpp)
    target_link_libraries(pointcloud_image_projection
      ${catkin_LIBRARIES}
+     ${OpenCV_LIBRARIES}
    )
 
    add_executable(laser_image_projection src/laser_image_projection.cpp)
