@@ -102,6 +102,8 @@ class PointcloudImageProjection
       sensor_msgs::PointCloud2 cloud_;
       eyecu_msgs::DistanceCamera face_distance_;
       ros::Time past_time_, current_time_;
+      tf::StampedTransform p_tf;
+      tf::Transform net_transform;
 
       // Eigen variables
       MatrixXd camProjection_matrix_;

@@ -244,12 +244,6 @@ void PointcloudImageProjection::drawBoundingBox(cv::Mat& img, std::vector<DepthB
 {
   for (int i = 0; i < list.size(); i++)
   {
-    // if (display_ || pub_result_)
-    // {
-    //   cv::rectangle(img, list[i].rect, cv::Scalar(255, 255, 0), 2, 4, 0);
-    //   cv::putText(img, list[i].name, cv::Point(list[i].rect.x, list[i].rect.y - 5),
-    //               cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(100, 255, 0), 3, 8);
-    // }
     if(list[i].dis != -1 )
     {
       if (display_ || pub_result_)
@@ -294,6 +288,12 @@ void PointcloudImageProjection::callbackMethod(const sensor_msgs::PointCloud2Con
                                     now, ros::Duration(4.0));
       tf_listener.lookupTransform("/base_link", "/camera_link",
                                     now, c_tf);
+      tf_listener.waitForTransform("/base_link", "/velodyne",
+                                    now, ros::Duration(4.0));
+      tf_listener.lookupTransform("/base_link", "/velodyne",
+                                    now, p_tf);
+
+      // net_transform = p_tf;
     }
     catch (tf::TransformException& e)
     {
@@ -309,7 +309,7 @@ void PointcloudImageProjection::callbackMethod(const sensor_msgs::PointCloud2Con
   try
   {
     pcl::fromROSMsg(*cloud_in, cloud_pcl_prev);
-    pcl_ros::transformPointCloud("/base_link", cloud_pcl_prev, cloud_pcl, listener_);
+    pcl_ros::transformPointCloud(cloud_pcl_prev, cloud_pcl, p_tf);
   }
   catch (tf::TransformException& e)
   {
