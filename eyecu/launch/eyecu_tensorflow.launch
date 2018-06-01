@@ -1,12 +1,17 @@
 <launch>
 
-<!-- Launching USB CAM launch files and Dynamixel controllers -->
-<include file="$(find eyecu)/launch/start_usb_cam.launch"/>
+  <!-- Launching USB CAM launch files and Dynamixel controllers -->
+  <include file="$(find eyecu)/launch/sensors/start_usb_cam.launch"/>
 
-<!-- Launch tensorflow based face tracker -->
-<node pkg="eyecu_tensorflow" type="eyecu_tensorflow.py" name="eyecu" output="screen"/>
+  <!-- Launch tensorflow based face tracker -->
+  <node pkg="eyecu_tensorflow" type="eyecu_tensorflow.py" name="eyecu" output="screen"/>
 
-<!-- Launch transforms -->
-<include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+  <!-- Launch velodyne lidar -->
+  <include file="$(find eyecu)/launch/sensors/VLP16_points.launch"/>
 
+  <!-- Launch transforms -->
+  <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+
+  <node name="laser_image" pkg="eyecu" type="laser_image_projection" output="screen"/>
+  
 </launch>

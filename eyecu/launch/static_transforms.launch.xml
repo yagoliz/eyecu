@@ -3,9 +3,9 @@
   <!-- Here we'll set the tf variables for the system -->
 
   <!-- Base link to camera -->
-  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_joint" args="0 0 0 0 0 0 1 base_link camera_link"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_joint" args="-0.2 0 0.3 0 0 0 1 base_link camera_link"/>
 
-  <node pkg="tf2_ros" type="static_transform_publisher" name="velodyne_joint" args="-0.5 0 1.0 0 0 0 base_link velodyne"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="velodyne_joint" args="-0.5 0 1.0 0 0.261799 0 base_link velodyne"/>
 
   <!-- Base link to eyes -->
   <node pkg="tf2_ros" type="static_transform_publisher" name="eye_joint" args="0 0 -0.15 0 0 0 1 base_link eyes_link"/>

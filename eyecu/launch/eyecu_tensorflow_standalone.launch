@@ -1,11 +1,16 @@
 <launch>
 
-<param name="video_device" value="/dev/front_camera" />
+  <param name="video_device" value="/dev/front_camera" />
 
-<!-- Launch tensorflow based face tracker -->
-<node pkg="eyecu_tensorflow" type="eyecu_tensorflow_standalone.py" name="eyecu" output="screen"/>
+  <!-- Launch tensorflow based face tracker -->
+  <node pkg="eyecu_tensorflow" type="eyecu_tensorflow_standalone.py" name="eyecu" output="screen"/>
 
-<!-- Launch transforms -->
-<include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+  <!-- Launch velodyne lidar -->
+  <include file="$(find eyecu)/launch/sensors/VLP16_points.launch"/>
+
+  <!-- Launch transforms -->
+  <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+
+  <node name="laser_image" pkg="eyecu" type="laser_image_projection" output="screen"/>
 
 </launch>

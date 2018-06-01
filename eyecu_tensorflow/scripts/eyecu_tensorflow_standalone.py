@@ -22,6 +22,9 @@ import tensorflow as tf
 
 # ROS libraries
 import rospy
+from std_msgs.msg import Header()
+from sensor_msgs.msg import Image, CameraInfo
+from cv_bridge import CvBridge, CvBridgeError
 
 # Custom messages
 from eyecu_msgs.msg import boundingBox
@@ -46,14 +49,14 @@ class FaceTensorFlow:
     # Get ROS parameters
     self._published_topic = rospy.get_param('published_topic', '/bounding_boxes')
     self._video_device = rospy.get_param('video_device', '/dev/front_camera')
-
     self._graph_name  = rospy.get_param('graph_name', '/frozen_inference_graph_face.pb')
     self._label_name  = rospy.get_param('label_name', '/face_label_map.pbtxt')
     self._num_classes = rospy.get_param('num_classes', 2)
-
     self._min_score = rospy.get_param('min_score', 0.5)
-    self._display_image = rospy.get_param('display_image', True)
-
+    self._display_image = rospy.get_param('display_image', False)
+    self._image_topic = rospy.get_param('image_topic', '/front_camera/image_raw')
+    self._camera_info_topic = rospy.get_param('camera_info_topic', '/front_camera/camera_info')
+    self._frame_id = rospy.get_param('frame_id', 'camera_link')
     self._camera_info_path = rospy.get_param('camera_info_path', '/home/yago/catkin_ws/src/eyecu/eyecu/config/logitech_webcam_calibration.yaml')
 
     # Tensorflow initialization
@@ -78,6 +81,8 @@ class FaceTensorFlow:
 
     # Subscribers and publishers
     self._pub = rospy.Publisher(self._published_topic, boundingBoxArray, queue_size=1)
+    self._pub_image = rospy.Publisher(self._image_topic      , Image     , queue_size=1)
+    self._pub_info  = rospy.Publisher(self._camera_info_topic, CameraInfo, queue_size=1)
 
   # Graph loading
   def load_graph(self):
@@ -95,6 +100,7 @@ class FaceTensorFlow:
       with f as stream:
         try:
           data = yaml.load(stream)
+          self.publish_info(data)
           self._width = data['image_width']
           self._height  = data['image_height']
 
@@ -106,11 +112,30 @@ class FaceTensorFlow:
       print('Error opening file. Loading default values')
       self.load_defaults()
 
+  def publish_info(self, data):
+    h = Header()
+    h.stamp = rospy.Time.now()
+    h.frame_id = self._frame_id
+
+    CInfo = CameraInfo()
+    CInfo.header = h
+    CInfo.height = self._height
+    CInfo.width  = self._width
+    CInfo.distortion_model = data['distortion_model']
+    CInfo.D = data['distortion_coefficients']['data']
+    CInfo.K = data['camera_matrix']['data']
+    CInfo.R = data['rectification_matrix']['data']
+    CInfo.P = data['projection_matrix']['data']
+
+    self._pub_info(CInfo)
+
+
   def load_defaults(self):
 
     self._width  = 640
     self._height = 480
     print('Defaults loaded correctly')
+
 
   # Image subscriber definition
   def detect_faces(self):
@@ -183,11 +208,12 @@ class FaceTensorFlow:
 # Main function
 if __name__ == '__main__':
 
-  cv2.namedWindow("object_detection", cv2.WND_PROP_FULLSCREEN)
-  cv2.setWindowProperty("object_detection",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-
   tensor = FaceTensorFlow()
   rospy.init_node('face_tracking_tensorflow', anonymous=True)
+
+  if tensor._display_image:
+    cv2.namedWindow("object_detection", cv2.WND_PROP_FULLSCREEN)
+    cv2.setWindowProperty("object_detection",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
 
   while True:
     tensor.detect_faces()

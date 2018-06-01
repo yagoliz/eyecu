@@ -50,7 +50,7 @@ class FaceTensorFlow:
     self._label_name  = rospy.get_param('label_name', '/face_label_map.pbtxt')
     self._num_classes = rospy.get_param('num_classes', 2)
 
-    self._display = rospy.get_param('display_result', True)
+    self._display = rospy.get_param('display_result', False)
 
     # Tensorflow initialization
     self._path_to_ckpt = sys.path[0] + '/exported_graphs' + self._graph_name

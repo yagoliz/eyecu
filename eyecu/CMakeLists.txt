@@ -18,7 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   visualization_msgs
 )
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 3 REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS system)
 
@@ -52,4 +52,10 @@ include_directories(
    add_executable(pointcloud_image_projection src/pointcloud_image_projection.cpp)
    target_link_libraries(pointcloud_image_projection
      ${catkin_LIBRARIES}
+   )
+
+   add_executable(laser_image_projection src/laser_image_projection.cpp)
+   target_link_libraries(laser_image_projection
+     ${catkin_LIBRARIES}
+     ${OpenCV_LIBRARIES}
    )

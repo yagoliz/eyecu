@@ -88,7 +88,7 @@ class LaserImageProjection
       ros::NodeHandle n_;
       laser_geometry::LaserProjection projector_;
       tf::TransformListener listener_;
-      ros::Publisher marker_pub;
+      ros::Publisher marker_pub, face_distance_pub;
       image_transport::Publisher image_pub_, result_pub_;
 
       // Message synchronizing variables
@@ -104,8 +104,10 @@ class LaserImageProjection
       eyecu_msgs::DistanceCamera face_distance_;
       ros::Time past_time_, current_time_;
 
+      // Eigen variables
       MatrixXd camProjection_matrix_;
 
+      // ROS params
       bool first_time_, pub_marks_, pub_result_;
 
       // Member function definitions
@@ -120,7 +122,7 @@ class LaserImageProjection
       void laserProjection(pcl::PointCloud<pcl::PointXYZ> &cloud,
                             MatrixXd &imagePoints);
 
-      void calHeatMap(float value,
+      void callHeatMap(float value,
                        float min,
                        float max,
                        int &r,
@@ -133,7 +135,7 @@ class LaserImageProjection
                            pcl::PointXYZ &point,
                            std::vector<DepthBox> &list);
 
-      void putProjectImage(MatrixXd &imagePoints,
+      void ProjectImage(MatrixXd &imagePoints,
                            const sensor_msgs::CameraInfoConstPtr& cinfo_in,
                            pcl::PointCloud<pcl::PointXYZ> &cloud,
                            cv::Mat &img);

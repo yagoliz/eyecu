@@ -15,7 +15,11 @@ LaserImageProjection::LaserImageProjection(ros::NodeHandle n):
 
   // We initialize the camera matrix
   initMatrix();
+
+  // Start image transport "nodehandle"
   image_transport::ImageTransport it(n);
+
+  // Start publishers
   if (pub_marks_)
   {
     marker_pub = n.advertise<visualization_msgs::Marker>("object_show", 1);
@@ -24,10 +28,15 @@ LaserImageProjection::LaserImageProjection(ros::NodeHandle n):
   {
     result_pub_ = it.advertise("result_image", 1);
   }
+
+  face_distance_pub = n.advertise<eyecu_msgs::DistanceCamera>("/face_distance", 1);
+
   image_pub_ = it.advertise("pub_image", 1);
+
+  // Initialize sync policy and start callback
   first_time_ = true;
-  sync_ = new message_filters::Synchronizer<AppxiSyncPolicy>
-    ( AppxiSyncPolicy(10), laser_sub_, image_sub_, cinfo_sub_);
+  sync_ = new message_filters::Synchronizer<SyncPolicy>
+    ( SyncPolicy(10), laser_sub_, image_sub_, cinfo_sub_);
 
   sync_->registerCallback(std::tr1::bind(&LaserImageProjection::callbackMethod,
                           this, std::tr1::placeholders::_1, std::tr1::placeholders::_2,
@@ -36,17 +45,21 @@ LaserImageProjection::LaserImageProjection(ros::NodeHandle n):
 
 void LaserImageProjection::initMatrix()
 {
+  // Initialize projection matrix (3D -> 2D)
   camProjection_matrix_.resize(3, 4);
   camProjection_matrix_.setZero();
 }
 
 void LaserImageProjection::setTransformMatrix(const sensor_msgs::CameraInfoConstPtr& cinfo_in, tf::StampedTransform c_tf)
 {
+  // This function is called once to calculate the actual projection matrix
+  // Declare matrices and variables
   MatrixXd projection_matrix;
   MatrixXd camTranslate_matrix;
   MatrixXd camRotate_matrix;
   double roll, pitch, yaw;
 
+  // Initialize matrices
   projection_matrix.resize(3, 4);
   projection_matrix.setZero();
   camTranslate_matrix.resize(4, 4);
@@ -54,8 +67,7 @@ void LaserImageProjection::setTransformMatrix(const sensor_msgs::CameraInfoConst
   camRotate_matrix.resize(4, 4);
   camRotate_matrix.setIdentity();
 
-  tf::Matrix3x3 m(c_tf.getRotation());
-  m.getRPY(roll, pitch, yaw);
+  // Add values to the projection matrix
   for(int i = 0; i < 3; i++)
   {
     for(int j = 0; j < 4; j++)
@@ -63,6 +75,11 @@ void LaserImageProjection::setTransformMatrix(const sensor_msgs::CameraInfoConst
       projection_matrix(i, j) = cinfo_in->P[4*i+j];
     }
   }
+
+  // Variables to store the Euler angles of the rotation matrix
+  tf::Matrix3x3 m(c_tf.getRotation());
+  m.getRPY(roll, pitch, yaw);
+
   camTranslate_matrix(0, 3) =  c_tf.getOrigin().y();
   camTranslate_matrix(1, 3) =  c_tf.getOrigin().z();
   camTranslate_matrix(2, 3) = -c_tf.getOrigin().x();
@@ -71,12 +88,14 @@ void LaserImageProjection::setTransformMatrix(const sensor_msgs::CameraInfoConst
   camRotate_matrix(2, 0) = -sin(yaw);
   camRotate_matrix(2, 2) =  cos(yaw);
 
+  // Computation of projection matrix
   camProjection_matrix_ = projection_matrix * camTranslate_matrix * camRotate_matrix;
 }
 
 void LaserImageProjection::laserProjection( pcl::PointCloud<pcl::PointXYZ> &cloud,
                       MatrixXd &imagePoints)
 {
+  // This funtion projects the pointcloud to the  image
   int n = cloud.width * cloud.height;
   int count = 0;
   imagePoints.resize(4, n);
@@ -91,8 +110,9 @@ void LaserImageProjection::laserProjection( pcl::PointCloud<pcl::PointXYZ> &clou
   imagePoints =  camProjection_matrix_ * scanPoints;
 }
 
-void LaserImageProjection::calHeatMap(float value, float min, float max, int &r, int &g, int &b )
+void LaserImageProjection::callHeatMap(float value, float min, float max, int &r, int &g, int &b )
 {
+  // This function colors points according to distance
   float ratio = 2.0 * (float)(value-min) / (float)(max - min);
   b = (int) 255*(1 - ratio);
   if (b < 0) b = 0;
@@ -103,9 +123,10 @@ void LaserImageProjection::calHeatMap(float value, float min, float max, int &r,
 
 void LaserImageProjection::putBoxDistance(int &x, int &y, double &distance, pcl::PointXYZ &point, std::vector<DepthBox> &list)
 {
+  // This function calculates wether a point is inside a bounding box
   for(int i = 0; i < list.size(); i++)
   {
-    if( x > list[i].rect.x + list[i].rect.width/4
+    if (   x > list[i].rect.x + list[i].rect.width/4
         && x < list[i].rect.x + list[i].rect.width - list[i].rect.width/4
         && y > list[i].rect.y + list[i].rect.height/4
         && y < list[i].rect.y + list[i].rect.height - list[i].rect.height/4)
@@ -114,29 +135,37 @@ void LaserImageProjection::putBoxDistance(int &x, int &y, double &distance, pcl:
       {
         list[i].dis = distance;
         list[i].point = point;
-        //std::cout << list[i].point <<std::endl;
+        face_distance_.X = -point.y;
+        face_distance_.Y = -point.z;
+        face_distance_.Z =  point.x;
       }
       else
       {
         // nearest point
-        if(distance < list[i].dis) list[i].dis = distance;
-        if(point.x < list[i].point.x) list[i].point.x = point.x;
-        list[i].point.y = (list[i].point.y + point.y)/2;
-        list[i].point.z = (list[i].point.z + point.z)/2;
-
+        if(distance < list[i].dis)
+        {
+          list[i].dis = distance;
+          list[i].point = point;
+          face_distance_.X = -point.y;
+          face_distance_.Y = -point.z;
+          face_distance_.Z =  point.x;
+        }
       }
     }
   }
 }
 
-void LaserImageProjection::putProjectImage(MatrixXd &imagePoints,
+void LaserImageProjection::ProjectImage(MatrixXd &imagePoints,
                       const sensor_msgs::CameraInfoConstPtr& cinfo_in,
                       pcl::PointCloud<pcl::PointXYZ> &cloud,
                       cv::Mat &img)
 {
+  // This function compares the 3D and projected points to return distance of objects
+
   int x, y, d;
   int r, g, b;
   int x_shift, y_shift;
+  // w is distance to camera
   float w;
   for (int i = 0; i < imagePoints.cols(); i++){
     w = imagePoints(2, i);
@@ -146,35 +175,21 @@ void LaserImageProjection::putProjectImage(MatrixXd &imagePoints,
       y = (int)(imagePoints(1, i) / w);
       if (x >= 0 && x < cinfo_in->width && y >= 0 && y < cinfo_in->height)
       {
-        switch (0)
-        {
-          case 0:
-            x_shift = x;
-            y_shift = y;
-            break;
-          case 1:
-            x_shift = x + cinfo_in->width;
-            y_shift = y;
-            break;
-          case 2:
-            x_shift = x;
-            y_shift = y + cinfo_in->height;
-            break;
-          case 3:
-            x_shift = x + cinfo_in->width;
-            y_shift = y + cinfo_in->height;
-            break;
-          default:
-            std::cout << "ERROR NUM" << std::endl;
-            break;
-        }
+        x_shift = x;
+        y_shift = y;
+
+        // Calculate the distance in 3D and call function to put the distance of the object
+        // in case there is any
         double distance = sqrt(pow(cloud.points[i].x, 2) + pow(cloud.points[i].y, 2));
         putBoxDistance(x_shift , y_shift, distance, cloud.points[i], box_list_);
-        calHeatMap(distance, HEAT_MIN, HEAT_MAX, r, g, b);
+
+        // This function changes the color of pointcloud according to its distance
+        callHeatMap(distance, HEAT_MIN, HEAT_MAX, r, g, b);
         cv::circle( img, cv::Point(x_shift, y_shift), 3, cv::Scalar(r, g, b), -1, 8 );
       }
     }
   }
+  face_distance_pub.publish(face_distance_);
 }
 
 void LaserImageProjection::putBoxOnRVIZ(int id, pcl::PointXYZ &point, std::string &str)
@@ -306,29 +321,31 @@ void LaserImageProjection::callbackMethod ( const sensor_msgs::LaserScanConstPtr
 
   LaserImageProjection::laserProjection(cloud_pcl, imagePoints);
 
-  putProjectImage( imagePoints, cinfo_in, cloud_pcl, cv_ptr->image);
-  cv::Mat combine_img;
-  combine_img =  cv::Mat::zeros(cinfo_in->height, cinfo_in->width, CV_8UC3);
-  cv_ptr->image.copyTo(combine_img(cv::Rect(0, 0, cv_ptr->image.cols, cv_ptr->image.rows)));
-  drawBoundingBox(combine_img, box_list_);
+  ProjectImage( imagePoints, cinfo_in, cloud_pcl, cv_ptr->image);
+  // cv::Mat combine_img;
+  // combine_img =  cv::Mat::zeros(cinfo_in->height, cinfo_in->width, CV_8UC3);
+  // cv_ptr->image.copyTo(combine_img(cv::Rect(0, 0, cv_ptr->image.cols, cv_ptr->image.rows)));
+  drawBoundingBox(cv_ptr->image, box_list_);
+
   current_time_ = ros::Time::now();
   ros::Duration diff = current_time_ - past_time_;
+
   std::string s = boost::lexical_cast<std::string>(1.0/diff.toSec()).substr(0, 4) + " fps" +
                   "   detect rate: " +  boost::lexical_cast<std::string>(1.0/box_duration_.toSec()).substr(0, 4);
-  cv::putText(combine_img, s, cv::Point(20, 40),
+  cv::putText(cv_ptr->image, s, cv::Point(20, 40),
               cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 255, 255), 3, 8);
   // std::cout << "fps: " << 1.0 / diff.toSec() << std::endl;
   past_time_ = current_time_;
   //image_pub_.publish(pub_img.toImageMsg());
   if (pub_result_)
   {
-    cv_bridge::CvImage pub_result_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", combine_img);
-    result_pub_.publish(pub_result_img.toImageMsg());
+    // cv_bridge::CvImage pub_result_img = cv_bridge::CvImage(std_msgs::Header(), "bgr8", combine_img);
+    result_pub_.publish(cv_ptr->toImageMsg());
   }
 
   if (display_)
   {
-    cv::imshow(OPENCV_WINDOW, combine_img);
+    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
     cv::waitKey(3);
   }
 }

@@ -2,10 +2,10 @@
 
 
   <!-- Launching USB CAM launch files and Dynamixel controllers -->
-  <include file="$(find eyecu)/launch/start_usb_cam.launch"/>
+  <include file="$(find eyecu)/launch/sensors/start_usb_cam.launch"/>
 
   <!-- Launch velodyne lidar -->
-  <include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch"/>
+  <include file="$(find eyecu)/launch/sensors/VLP16_points.launch"/>
 
   <!-- Launch transforms -->
   <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
@@ -14,6 +14,6 @@
    <rosparam file="$(find eyecu)/config/track.yaml" command="load"/>
    <node name="eyecu" pkg="eyecu" type="eyecu_node_dlib" output="screen"/>
 
-   <node name="pointcloud_image" pkg="eyecu" type="pointcloud_image_projection" output="screen"/>
+   <node name="laser_image" pkg="eyecu" type="laser_image_projection" output="screen"/>
 
 </launch>
