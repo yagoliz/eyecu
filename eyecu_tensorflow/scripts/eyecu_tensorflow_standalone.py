@@ -146,9 +146,9 @@ class FaceTensorFlow:
     if self._display_image:
       cv2.imshow('object_detection', image_np)
 
-    self.publish_face_distance(np.squeeze(boxes), np.squeeze(scores))
+    self.publish_bboxes(np.squeeze(boxes), np.squeeze(scores))
 
-  def publish_face_distance(self, boxes, scores):
+  def publish_bboxes(self, boxes, scores):
 
     bbox = boundingBox()
     bboxes = boundingBoxArray()

@@ -1,4 +1,4 @@
-#include <laser_projection/pointcloud_image_projection.h>
+#include <pointcloud_projection/pointcloud_image_projection.h>
 
 PointcloudImageProjection::PointcloudImageProjection(ros::NodeHandle n):
   n_(n),

@@ -14,6 +14,6 @@
    <rosparam file="$(find eyecu)/config/track.yaml" command="load"/>
    <node name="eyecu" pkg="eyecu" type="eyecu_node_dlib" output="screen"/>
 
-   <node name="pointcloud" pkg="eyecu" type="pointcloud_image_projection" output="screen"/>
+   <node name="pointcloud_image" pkg="eyecu" type="pointcloud_image_projection" output="screen"/>
 
 </launch>

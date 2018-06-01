@@ -3,24 +3,22 @@
 LaserImageProjection::LaserImageProjection(ros::NodeHandle n):
   n_(n),
   laser_sub_(n_, "scan", 10),
-  image_sub_(n_, "/image_raw_color", 10),
-  cinfo_sub_(n_, "/camera_info", 10)
+  image_sub_(n_, "/front_camera/image_raw", 10),
+  cinfo_sub_(n_, "/front_camera/camera_info", 10)
 {
+  // First we load the private parameters
   ros::NodeHandle nh_private("~");
   nh_private.param<bool>("display", display_, false);
   nh_private.param<bool>("pub_marks", pub_marks_, false);
-  nh_private.param<bool>("pub_theta", pub_theta_, false);
-  nh_private.param<bool>("pub_result", pub_result_, false);
-  //n.param<bool>("display", display_, false);
+  nh_private.param<bool>("pub_result", pub_result_, true);
+  nh_private.param<bool>("display", display_, false);
+
+  // We initialize the camera matrix
   initMatrix();
   image_transport::ImageTransport it(n);
   if (pub_marks_)
   {
     marker_pub = n.advertise<visualization_msgs::Marker>("object_show", 1);
-  }
-  if (pub_theta_)
-  {
-    theta_pub_ = n.advertise<cam_ring_msg::ThetaArray>("theta", 1);
   }
   if (pub_result_)
   {
@@ -74,11 +72,6 @@ void LaserImageProjection::setTransformMatrix(const sensor_msgs::CameraInfoConst
   camRotate_matrix(2, 2) =  cos(yaw);
 
   camProjection_matrix_ = projection_matrix * camTranslate_matrix * camRotate_matrix;
-
-  // std::cout << "get rotation: " << std::endl << roll << pi <<std::endl;
-  // std::cout << "roste_matrix: " << std::endl <<camRotate_matrix_[num] <<std::endl;
-  // std::cout << "projection_matrix: " << std::endl <<projection_matrix_[num] <<std::endl;
-  // std::cout << "camTranslate_matrix: " << std::endl << camTranslate_matrix_[num] <<std::endl;
 }
 
 void LaserImageProjection::laserProjection( pcl::PointCloud<pcl::PointXYZ> &cloud,
@@ -96,7 +89,6 @@ void LaserImageProjection::laserProjection( pcl::PointCloud<pcl::PointXYZ> &clou
     scanPoints(3, i) = 1;
   }
   imagePoints =  camProjection_matrix_ * scanPoints;
-  // std::cout << imagePoints[2].transpose() <<std::endl;
 }
 
 void LaserImageProjection::calHeatMap(float value, float min, float max, int &r, int &g, int &b )
@@ -126,12 +118,6 @@ void LaserImageProjection::putBoxDistance(int &x, int &y, double &distance, pcl:
       }
       else
       {
-        // // mean of points
-        // list[i].dis = (list[i].dis + distance)/2;
-        // list[i].point.x = (list[i].point.x + point.x)/2;
-        // list[i].point.y = (list[i].point.y + point.y)/2;
-        // list[i].point.z = (list[i].point.z + point.z)/2;
-
         // nearest point
         if(distance < list[i].dis) list[i].dis = distance;
         if(point.x < list[i].point.x) list[i].point.x = point.x;
@@ -235,13 +221,10 @@ void LaserImageProjection::putBoxOnRVIZ(int id, pcl::PointXYZ &point, std::strin
   marker_pub.publish(marker);
 }
 
-void LaserImageProjection::drawBoundungBox(cv::Mat& img, std::vector<DepthBox> &list)
+void LaserImageProjection::drawBoundingBox(cv::Mat& img, std::vector<DepthBox> &list)
 {
-  cam_ring_msg::Theta theta;
-  cam_ring_msg::ThetaArray theta_array;
   for (int i = 0; i < list.size(); i++)
   {
-    //std::cout << list[i].rect <<std::endl;
     if (display_ || pub_result_)
     {
       cv::rectangle(img, list[i].rect, cv::Scalar(255, 255, 0), 2, 4, 0);
@@ -256,22 +239,11 @@ void LaserImageProjection::drawBoundungBox(cv::Mat& img, std::vector<DepthBox> &
         cv::putText(img, s, cv::Point(list[i].rect.x + 5, list[i].rect.y + 30),
                     cv::FONT_HERSHEY_SIMPLEX, 1,cv::Scalar(0, 0, 255), 3, 8);
       }
-      //std::cout << list[i].point <<std::endl;
       if(pub_marks_)
       {
         putBoxOnRVIZ(i, list[i].point, list[i].name);
       }
-      if(pub_theta_)
-      {
-        theta.theta = atan(list[i].point.y / list[i].point.x) * 180 / PI;
-        theta.dis = list[i].dis;
-        theta_array.Thetas.push_back(theta);
-      }
     }
-  }
-  if(pub_theta_)
-  {
-    theta_pub_.publish(theta_array);
   }
 }
 
@@ -338,7 +310,7 @@ void LaserImageProjection::callbackMethod ( const sensor_msgs::LaserScanConstPtr
   cv::Mat combine_img;
   combine_img =  cv::Mat::zeros(cinfo_in->height, cinfo_in->width, CV_8UC3);
   cv_ptr->image.copyTo(combine_img(cv::Rect(0, 0, cv_ptr->image.cols, cv_ptr->image.rows)));
-  drawBoundungBox(combine_img, box_list_);
+  drawBoundingBox(combine_img, box_list_);
   current_time_ = ros::Time::now();
   ros::Duration diff = current_time_ - past_time_;
   std::string s = boost::lexical_cast<std::string>(1.0/diff.toSec()).substr(0, 4) + " fps" +
@@ -361,7 +333,7 @@ void LaserImageProjection::callbackMethod ( const sensor_msgs::LaserScanConstPtr
   }
 }
 
-void updateBox(const deep_learning_msgs::boundingBoxArray::ConstPtr& msg)
+void updateBox(const eyecu_msgs::boundingBoxArray::ConstPtr& msg)
 {
   DepthBox box;
   box_list_.clear();
@@ -381,19 +353,28 @@ void updateBox(const deep_learning_msgs::boundingBoxArray::ConstPtr& msg)
   box_past_time_ = box_current_time_;
 }
 
+// Main function
 int main(int argc, char **argv)
 {
+  // Set windows properties if image is displayed using OpenCV's imshow
   if (display_)
   {
     cv::namedWindow(OPENCV_WINDOW, cv::WND_PROP_FULLSCREEN);
     cv::setWindowProperty(OPENCV_WINDOW, CV_WND_PROP_FULLSCREEN, CV_WINDOW_FULLSCREEN);
-    //cv::namedWindow(OPENCV_WINDOW, cv::WINDOW_NORMAL);
     cv::resizeWindow(OPENCV_WINDOW, 1920, 1080);
   }
+
+  // Initalize node
   ros::init(argc, argv, "laser_image_projection");
   ros::NodeHandle n;
-  ros::Subscriber sub_box_ = n.subscribe("/deep_boundingBox", 1, updateBox);
+
+  // Subscribe to bounding box topic
+  ros::Subscriber sub_box_ = n.subscribe("/bounding_boxes", 1, updateBox);
+
+  // Create object
   LaserImageProjection lstopc(n);
+
+  // Node is spinned to continue subscribing
   ros::spin();
   return 0;
 }

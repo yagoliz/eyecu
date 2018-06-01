@@ -1,8 +1,12 @@
 <launch>
 
-<param name="video_device" value="/dev/front_camera" />
+<!-- Launching USB CAM launch files and Dynamixel controllers -->
+<include file="$(find eyecu)/launch/start_usb_cam.launch"/>
 
 <!-- Launch tensorflow based face tracker -->
-<node pkg="eyecu_tensorflow" type="eyecu_tensorflow_standalone.py" name="eyecu" output="screen"/>
+<node pkg="eyecu_tensorflow" type="eyecu_tensorflow.py" name="eyecu" output="screen"/>
+
+<!-- Launch transforms -->
+<include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
 
 </launch>

@@ -1,13 +1,10 @@
 <launch>
 
   <!-- Launch tracker -->
-  <include file="$(find eyecu)/launch/eyecu_tensorflow.launch"/>
+  <include file="$(find eyecu)/launch/eyecu_tensorflow_standalone.launch"/>
 
   <!-- Launch serial communication with arduino -->
   <include file="$(find eyecu)/launch/arduino_connect.launch"/>
-
-  <!-- Launch transforms -->
-  <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
 
   <!-- Starting face tracker nodes -->
   <include file="$(find eyecu_control)/launch/start_dynamixel.launch"/>

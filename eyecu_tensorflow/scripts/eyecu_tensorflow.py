@@ -22,7 +22,8 @@ from sensor_msgs.msg import CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 
 # Custom messages
-from eyecu_msgs.msg import DistanceCamera
+from eyecu_msgs.msg import boundingBox
+from eyecu_msgs.msg import boundingBoxArray
 
 # Path to this package
 import rospkg
@@ -40,14 +41,16 @@ class FaceTensorFlow:
   # Initialization function
   def __init__(self):
     # Get ROS parameters
-    self._camera_topic = rospy.get_param('camera_topic','/usb_cam'  )
+    self._camera_topic = rospy.get_param('camera_topic','/front_camera'  )
     self._image_topic  = rospy.get_param('image_topic' ,'/image_raw')
     self._camera_info_topic = rospy.get_param('camera_info_topic', '/camera_info')
-    self._published_topic = rospy.get_param('published_topic', '/face_distance')
+    self._published_topic = rospy.get_param('published_topic', '/bounding_boxes')
 
     self._graph_name  = rospy.get_param('graph_name', '/frozen_inference_graph_face.pb')
     self._label_name  = rospy.get_param('label_name', '/face_label_map.pbtxt')
     self._num_classes = rospy.get_param('num_classes', 2)
+
+    self._display = rospy.get_param('display_result', True)
 
     # Tensorflow initialization
     self._path_to_ckpt = sys.path[0] + '/exported_graphs' + self._graph_name
@@ -63,13 +66,11 @@ class FaceTensorFlow:
                max_num_classes=self._num_classes, use_display_name=True)
     self._category_index = label_map_util.create_category_index(self._categories)
 
+    self._min_score = 0.5
+
     # OpenCV and bridge variables
     self._cv_bridge = CvBridge()
     # Load default values for calibration
-    self._fx = 507.5024270566367
-    self._cx = 322.7029200800868
-    self._fy = 507.2559728776117
-    self._cy = 239.1426526245542
     self._width  = 640
     self._height = 480
 
@@ -77,7 +78,7 @@ class FaceTensorFlow:
     self._image_sub = rospy.Subscriber((self._camera_topic + self._image_topic), Image, self.image_callback, queue_size=1)
     self._camera_info_sub = rospy.Subscriber((self._camera_topic + self._camera_info_topic),
                           CameraInfo, self.camera_info_callback, queue_size=1)
-    self._pub = rospy.Publisher(self._published_topic, DistanceCamera, queue_size=1)
+    self._pub = rospy.Publisher(self._published_topic, boundingBoxArray, queue_size=1)
 
   # Graph loading
   def load_graph(self):
@@ -125,20 +126,44 @@ class FaceTensorFlow:
           self._category_index,
           use_normalized_coordinates=True,
           line_thickness=8)
-    #
-    #   print (boxes)
-    #
-    #   # cv2.imshow('object_detection', cv2.resize(image_np, (19,600)))
-    cv2.imshow('object_detection', image_np)
+
+    if self._display:
+      cv2.imshow('object_detection', image_np)
+
+    self.publish_bboxes(np.squeeze(boxes), np.squeeze(scores))
 
   # # Camera info subscriber definition
   def camera_info_callback(self, camera_info_msg):
-    self._fx = camera_info_msg.K[0]
-    self._cx = camera_info_msg.K[2]
-    self._fy = camera_info_msg.K[4]
-    self._cy = camera_info_msg.K[5]
     self._width  = camera_info_msg.width
     self._height = camera_info_msg.height
+
+  # Publish bounding boxes
+  def publish_bboxes(self, boxes, scores):
+
+    bbox = boundingBox()
+    bboxes = boundingBoxArray()
+
+    max_face = -1
+    # We pick the biggest face we find
+    for i in range(boxes.shape[0]):
+      if scores[i] > self._min_score:
+        max_face = i
+
+    if max_face >= 0:
+      xmin = boxes[max_face][1]*self._width
+      xmax = boxes[max_face][3]*self._width
+      ymin = boxes[max_face][0]*self._height
+      ymax = boxes[max_face][2]*self._height
+
+      bbox.name = "face"
+      bbox.pointA.x = xmin
+      bbox.pointA.y = ymin
+      bbox.pointB.x = xmax
+      bbox.pointB.y = ymax
+
+      bboxes = [bbox]
+
+      self._pub.publish(bboxes)
 
 
 
