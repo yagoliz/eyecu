@@ -1,0 +1,17 @@
+<launch>
+
+  <!-- Here we'll set the tf variables for the system -->
+
+  <!-- Base link to camera -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="camera_joint" args="0 0 0 0 0 0 1 base_link camera_link"/>
+
+  <!-- Base link to eyes -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="eye_joint" args="0 0 -0.15 0 0 0 1 base_link eyes_link"/>
+
+  <!-- Eyes link to right eye -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="right_eye_joint" args="0 -0.08 0 0 0 0 1 eyes_link right_eye_link"/>
+
+  <!-- Eyes link to left eye -->
+  <node pkg="tf2_ros" type="static_transform_publisher" name="left_eye_joint" args="0 0.08 0 0 0 0 1 eyes_link left_eye_link "/>
+
+</launch>

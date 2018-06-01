@@ -1,0 +1,14 @@
+<launch>
+
+
+<!-- Launching USB CAM launch files and Dynamixel controllers -->
+
+  <include file="$(find eyecu)/launch/start_usb_cam.launch"/>
+
+
+<!-- Starting face tracker node -->
+   <rosparam file="$(find eyecu)/config/track.yaml" command="load"/>
+
+   <node name="eyecu" pkg="eyecu" type="eyecu_node_dlib" output="screen"/>
+
+</launch>

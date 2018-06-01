@@ -1,0 +1,7 @@
+<launch>
+  <node name="arduino_ring" pkg="rosserial_python" type="serial_node.py">
+    <param name="port" value="/dev/arduino_led"/>
+    <param name="baud" value="57600"/>
+  </node>
+
+</launch>

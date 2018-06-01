@@ -1,0 +1,5 @@
+base_input_topic: "/front_camera/image_raw"
+face_detected_image_topic: "/face_detector/raw_image"
+face_tracking: 1
+display_original_image: 0
+display_tracking_image: 1

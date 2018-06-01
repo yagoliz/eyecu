@@ -1,0 +1,22 @@
+
+<!-- This will open USB To Dynamixel controller and search for servos -->
+<launch>
+    <node name="dynamixel_manager" pkg="dynamixel_controllers" type="controller_manager.py" output="screen">
+        <rosparam>
+            namespace: dxl_manager
+            serial_ports:
+                eye_port:
+                    port_name: "/dev/eye_usb"
+                    baud_rate: 1000000
+                    min_motor_id: 1
+                    max_motor_id: 25
+                    update_rate: 20
+        </rosparam>
+    </node>
+
+<!-- This will launch the Dynamixel pan controller -->
+
+  <include file="$(find eyecu_control)/launch/start_eye_controller.launch"/>
+
+
+</launch>

@@ -1,0 +1,8 @@
+<launch>
+
+<param name="video_device" value="/dev/front_camera" />
+
+<!-- Launch tensorflow based face tracker -->
+<node pkg="eyecu_tensorflow" type="eyecu_tensorflow_standalone.py" name="eyecu" output="screen"/>
+
+</launch>
