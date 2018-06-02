@@ -1,14 +1,24 @@
 <launch>
+  <arg name="video_device" default="/dev/front_camera" />
+  <arg name="image_width" default="640" />
+  <arg name="image_height" default="480" />
+  <arg name="pixel_format" default="yuyv" />
+  <arg name="camera_frame_id" default="camera_link" />
+  <arg name="autofocus" default="false" />
+  <arg name="io_method" default="mmap"/>
+  <arg name="camera_info_url" default="file://$(find eyecu)/config/logitech_webcam_calibration_1280.yaml"/>
+  <arg name="camera_name" default="front_camera"/>
+
   <node name="front_camera" pkg="usb_cam" type="usb_cam_node" output="screen" >
-    <param name="video_device" value="/dev/front_camera" />
-    <param name="image_width" value="640" />
-    <param name="image_height" value="480" />
-    <param name="pixel_format" value="yuyv" />
-    <param name="camera_frame_id" value="camera_link" />
-    <param name="autofocus" value="false" />
-    <param name="io_method" value="mmap"/>
-    <param name="camera_info_url" value="file://$(find eyecu)/config/logitech_webcam_calibration.yaml"/>
-    <param name="camera_name" value="front_camera"/>
+    <param name="video_device" value="$(arg video_device)" />
+    <param name="image_width" value="$(arg image_width)" />
+    <param name="image_height" value="$(arg image_height)" />
+    <param name="pixel_format" value="$(arg pixel_format)" />
+    <param name="camera_frame_id" value="$(arg camera_frame_id)" />
+    <param name="autofocus" value="$(arg autofocus)" />
+    <param name="io_method" value="$(arg io_method)"/>
+    <param name="camera_info_url" value="$(arg camera_info_url)"/>
+    <param name="camera_name" value="$(arg camera_name)"/>
   </node>
 
 </launch>

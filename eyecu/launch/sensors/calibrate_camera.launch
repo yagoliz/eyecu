@@ -1,0 +1,11 @@
+<launch>
+  <include file="$(find eyecu)/launch/sensors/start_usb_cam.launch">
+    <arg name="image_width" value="1280" />
+    <arg name="image_height" value="720" />
+  </include>
+
+  <node name="calibration_node" pkg="camera_calibration" type="cameracalibrator.py"
+    args="--size 8x6 --square 0.025 image:=/front_camera/image_raw camera:=/front_camera"
+    output="screen"/>
+
+</launch>

@@ -57,7 +57,7 @@ class FaceTensorFlow:
     self._image_topic = rospy.get_param('image_topic', '/front_camera/image_raw')
     self._camera_info_topic = rospy.get_param('camera_info_topic', '/front_camera/camera_info')
     self._frame_id = rospy.get_param('frame_id', 'camera_link')
-    self._camera_info_path = rospy.get_param('camera_info_path', '/home/yago/catkin_ws/src/eyecu/eyecu/config/logitech_webcam_calibration.yaml')
+    self._camera_info_path = rospy.get_param('camera_info_path', '/home/yago/catkin_ws/src/eyecu/eyecu/config/logitech_webcam_calibration_640.yaml')
 
     # Tensorflow initialization
     self._path_to_ckpt = sys.path[0] + '/exported_graphs' + self._graph_name
