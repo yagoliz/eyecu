@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   laser_geometry
   message_filters
   visualization_msgs
+  apriltags_ros
 )
 
 find_package(OpenCV 3 REQUIRED)
@@ -36,27 +37,32 @@ include_directories(
   include
 )
 
- add_executable(eyecu_node src/eyecu_node.cpp)
- target_link_libraries(eyecu_node
-    ${catkin_LIBRARIES}
-    ${OpenCV_LIBRARIES}
-  )
+add_executable(eyecu_node src/eyecu_node.cpp)
+target_link_libraries(eyecu_node
+  ${catkin_LIBRARIES}
+  ${OpenCV_LIBRARIES}
+)
 
-  add_executable(eyecu_node_dlib src/eyecu_node_dlib.cpp)
-  target_link_libraries(eyecu_node_dlib
-     ${catkin_LIBRARIES}
-     ${OpenCV_LIBRARIES}
-     dlib::dlib
-   )
+add_executable(eyecu_node_dlib src/eyecu_node_dlib.cpp)
+target_link_libraries(eyecu_node_dlib
+   ${catkin_LIBRARIES}
+   ${OpenCV_LIBRARIES}
+   dlib::dlib
+ )
 
-   add_executable(pointcloud_image_projection src/pointcloud_image_projection.cpp)
-   target_link_libraries(pointcloud_image_projection
-     ${catkin_LIBRARIES}
-     ${OpenCV_LIBRARIES}
-   )
+add_executable(pointcloud_image_projection src/pointcloud_image_projection.cpp)
+target_link_libraries(pointcloud_image_projection
+ ${catkin_LIBRARIES}
+ ${OpenCV_LIBRARIES}
+)
 
-   add_executable(laser_image_projection src/laser_image_projection.cpp)
-   target_link_libraries(laser_image_projection
-     ${catkin_LIBRARIES}
-     ${OpenCV_LIBRARIES}
-   )
+add_executable(laser_image_projection src/laser_image_projection.cpp)
+target_link_libraries(laser_image_projection
+ ${catkin_LIBRARIES}
+ ${OpenCV_LIBRARIES}
+)
+
+add_executable(apriltag_to_face_distance src/apriltag_to_face_distance.cpp)
+target_link_libraries(apriltag_to_face_distance
+ ${catkin_LIBRARIES}
+)

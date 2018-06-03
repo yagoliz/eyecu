@@ -6,7 +6,7 @@
   <arg name="camera_frame_id" default="camera_link" />
   <arg name="autofocus" default="false" />
   <arg name="io_method" default="mmap"/>
-  <arg name="camera_info_url" default="file://$(find eyecu)/config/logitech_webcam_calibration_1280.yaml"/>
+  <arg name="camera_info_url" default="file://$(find eyecu)/config/logitech_webcam_calibration_640.yaml"/>
   <arg name="camera_name" default="front_camera"/>
 
   <node name="front_camera" pkg="usb_cam" type="usb_cam_node" output="screen" >

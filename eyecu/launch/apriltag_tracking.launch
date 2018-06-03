@@ -1,0 +1,65 @@
+<launch>
+
+  <!-- Launch camera -->
+  <include file="$(find eyecu)/launch/sensors/start_usb_cam.launch">
+    <arg name="image_width" value="1280" />
+    <arg name="image_height" value="720" />
+  </include>
+
+  <!-- Launch transforms -->
+  <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+
+  <node pkg="apriltags_ros" type="apriltag_detector_node" name="apriltag_detector" output="screen">
+    <!-- Remap topic required by the node to custom topics -->
+    <remap from="image_rect" to="front_camera/image_raw" />
+    <remap from="camera_info" to="front_cameracamera_info" />
+
+    <!-- Optional: Subscribe to the compressed stream-->
+    <!-- <param name="image_transport" type="str" value="compressed" /> -->
+
+    <!-- Select the tag family: 16h5, 25h7, 25h9, 36h9, or 36h11(default) -->
+    <param name="tag_family" type="str" value="36h11" />
+
+    <!-- Enable projected optical measurements for more accurate tag transformations -->
+    <!-- This exists for backwards compatability and should be left true for new setups -->
+    <param name="projected_optics" type="bool" value="true" />
+
+    <param name="sensor_frame_id" value="/camera_link"/>
+
+    <!-- Describe the tags -->
+    <rosparam param="tag_descriptions">[
+      {id: 0, size: 0.163513},
+      {id: 1, size: 0.163513, frame_id: a_frame},
+      {id: 2, size: 0.163513, frame_id: tag_2},
+      {id: 3, size: 0.163513},
+      {id: 4, size: 0.163513},
+      {id: 5, size: 0.163513}]
+    </rosparam>
+  </node>
+
+  <node pkg="eyecu" type="apriltag_to_face_distance" name="apriltag_to_face_node" output="screen"/>
+
+  <!-- Starting face tracker nodes -->
+  <include file="$(find eyecu_control)/launch/start_dynamixel.launch"/>
+
+  <group ns="right_eye">
+    <node name="face_controller" pkg="eyecu_control" type="eyecu_control" output="screen"/>
+
+    <node name="motor_state" pkg="eyecu_control" type="motor_state_broadcaster" output="screen">
+      <param name="eye_link" value="right_eye_link"/>
+      <param name="tilt_link" value="right_eye_tilt_link"/>
+      <param name="gaze_link" value="right_eye_gaze_link"/>
+    </node>
+  </group>
+
+  <group ns="left_eye">
+    <node name="face_controller" pkg="eyecu_control" type="eyecu_control" output="screen"/>
+
+    <node name="motor_state" pkg="eyecu_control" type="motor_state_broadcaster" output="screen">
+      <param name="eye_link" value="left_eye_link"/>
+      <param name="tilt_link" value="left_eye_tilt_link"/>
+      <param name="gaze_link" value="left_eye__gazelink"/>
+    </node>
+  </group>
+
+</launch>
