@@ -50,7 +50,11 @@ This packages were tested with:
 
 * OpenCV (for C++ and Python 2.7)
   
-* Deep Learning Library ([DLib](http://dlib.net/)) for C++.
+* Deep Learning Library ([DLib](https://sourceforge.net/projects/dclib/files/dlib/v19.10/dlib-19.10.tar.bz2/download)) for C++ (version 19.10).
+  * If you want to use another version of DLib, you will need to change the CMakeLists.txt from eyecu package. Specifically change this line:
+  ```cmake
+  add_subdirectory($ENV{HOME}/cmake_workspace/dlib-<VERSION>/dlib dlib_build)
+  ```
 
 * Boost library.
 
