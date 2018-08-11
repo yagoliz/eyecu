@@ -19,7 +19,7 @@ from imutils.video import WebcamVideoStream
 
 import rospkg
 
-cap = WebcamVideoStream(src='/dev/front_camera').start()
+cap = WebcamVideoStream(src='/dev/video0').start()
 # cap = cv2.VideoCapture(0)
 cv2.namedWindow("object_detection", cv2.WND_PROP_FULLSCREEN)
 cv2.setWindowProperty("object_detection",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)

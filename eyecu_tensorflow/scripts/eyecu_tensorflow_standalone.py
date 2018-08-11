@@ -170,10 +170,18 @@ class FaceTensorFlow:
   def publish_face_distance(self, boxes, scores):
 
     max_face = -1
+    biggest_face = 0
     # We pick the biggest face we find
     for i in range(boxes.shape[0]):
+
       if scores[i] > self._min_score:
-        max_face = i
+
+        current_face = (boxes[i][3] - boxes[i][1]) * (boxes[i][2] - boxes[i][0])
+
+        if current_face > biggest_face:
+          max_face = i
+          biggest_face = current_face
+          
 
     if max_face >= 0:
       xmin = boxes[max_face][1]*self._width
