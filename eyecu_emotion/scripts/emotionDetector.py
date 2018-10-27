@@ -1,80 +1,56 @@
 #!/usr/bin/env python
 
 # Main libraries
-import os
-import time
+import sys
+
+# Emoji object
+from emojiObject import *
 
 # Installed libraries
-import cv2
-# from keras.models import load_model
+from keras.models import load_model
 import numpy as np
-# from statistics import mode
-# from imutils.video import VideoStream
+from statistics import mode
+from imutils.video import WebcamVideoStream
 
 # ROS
-# import rospy
-# from std_msgs.msg import Int8
-# import rospkg
+import rospy
+from std_msgs.msg import Int8
+# Get path to this pkg
+import rospkg
+rospack = rospkg.RosPack()
+sys.path.insert(0, rospack.get_path('eyecu_emotion'))
+
+# Custom ROS messages
+from eyecu.msg import DistanceCamera
 
 # Utilities
-# from utils.datasets import get_labels
-# from utils.inference import detect_faces
-# from utils.inference import draw_text
-# from utils.inference import draw_bounding_box
-# from utils.inference import apply_offsets
-# from utils.inference import load_detection_model
-# from utils.preprocessor import preprocess_input
+from utils.datasets import get_labels
+from utils.inference import detect_faces
+from utils.inference import draw_text
+from utils.inference import draw_bounding_box
+from utils.inference import apply_offsets
+from utils.inference import load_detection_model
+from utils.preprocessor import preprocess_input
 
-# Create supporting classes
-class emojiObject(object):
-    def __init__(self):
-        # Variable to contain the emoji image:
-        self._img = []
-        # Next variables are used to change the desired face for an emoji
-        # Variable to contain the mask
-        self._mask = []
-        # Variable to contain the inverse mask
-        self._mask_inverse = []
+# Emotion detector class
+class emotionDetector(object):
+    # Init function takes a dictionary as an argument
+    def __init__(self, emoji_dictionary):
+        # Values for average face dimensions
+        self._face_width = 13.9 # in cm
+        self._face_height = 22.5
 
-    # This function will set the data to the object
-    def set_data(self, data):
-        self._img = data[0]
-        self._mask = data[1]
-        self._mask_inverse = data[2]
+        # Emoji dictionary
+        self._emoji_dictionary = emoji_dictionary
 
-    # Get data in tuple form
-    def get_data(self):
-        return (self._img, self._mask, self._mask_inverse)
+        # ROS parameters
+        self._camera = rospy.get_param("~/cam_device", "/dev/video0")
+        self._camera_calibration_path = rospy.get_param("~/camera_info_path", "/home/yago/catkin_ws/src/eyecu/eyecu/config/logitech_webcam_calibration.yaml")
 
-# Emoji loader function
-def load_emoji(path_to_images):
-    '''
-    This function returns an emoji list dictionary given the path to the 
-    images as a string
-    '''
-    # Create empty dictionary
-    emoji_dictionary = {}
+        self._emotion_topic = rospy.get_param("~/emotion_topic", "/emotion_status")
+        self._face_distance_topic = rospy.get_param("~/face_distance_topic", "/face_distance")
 
-    # List all emotions names
-    emoji_list = ['angry', 'disgust','sad', 'neutral', 'happy' ]
-    for emoji in emoji_list:
-        # Create emoji object
-        emoji_object = emojiObject()
+        self._detection_model_path = rospy.get_param("detection_model_path")
 
-        # Load image
-        filename = path_to_images + "/" + emoji + ".png"
-        emoji_image = cv2.imread(filename, -1) 
-        if not isinstance(emoji_image, np.ndarray):
-            raise IOError("Error loading image")
-
-        # Create the masks for the emoji
-        emoji_mask = emoji_image[:, :, 3]
-        emoji_mask_inverted = cv2.bitwise_not(emoji_mask)
-
-        # Set the values to the object
-        emoji_object.set_data((emoji_image, emoji_mask, emoji_mask_inverted))
-        emoji_dictionary[emoji] = emoji_object
-        
-    # Return the completed dictionary
-    return emoji_dictionary
-
+        # Initialize publishers
+        self._emotion_publisher = rospy.Publisher("")
