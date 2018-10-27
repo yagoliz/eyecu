@@ -10,28 +10,15 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
-  message_generation
+  eyecu_msgs
 )
 
 find_package(OpenCV REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS system)
 
-add_message_files(
-   FILES
-   centroid.msg
-   DistanceCamera.msg
- )
-
-
-## Generate added messages and services with any dependencies listed here
- generate_messages(
-   DEPENDENCIES
-   std_msgs
- )
-
 catkin_package(
-  CATKIN_DEPENDS roscpp rospy std_msgs message_runtime
+  CATKIN_DEPENDS roscpp rospy std_msgs
   INCLUDE_DIRS include
 )
 

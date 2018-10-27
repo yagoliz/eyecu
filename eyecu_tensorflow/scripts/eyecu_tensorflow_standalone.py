@@ -24,7 +24,7 @@ import tensorflow as tf
 import rospy
 
 # Custom messages
-from eyecu.msg import DistanceCamera
+from eyecu_msgs.msg import DistanceCamera
 
 # Path to this package
 import rospkg

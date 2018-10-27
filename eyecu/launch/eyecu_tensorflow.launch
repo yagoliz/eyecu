@@ -3,6 +3,6 @@
 <param name="video_device" value="/dev/video0" />
 
 <!-- Launch tensorflow based face tracker -->
-<node pkg="eyecu_tensorflow" type="eyecu_tensorflow_standalone.py" name="eyecu" output="screen"/>
+<node pkg="eyecu_tensorflow" type="eyecu_tensorflow_standalone.py" name="eyecu"/>
 
 </launch>
