@@ -50,7 +50,6 @@ def load_emo(path_images):
         for j in range(1, 5):
 
             file_name = path_images + "/images/" + file_emo + str(j) + ".png"
-            print file_name
             emo = []
             emo = cv2.imread(file_name, -1)
             # print emo.dtype
