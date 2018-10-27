@@ -1,49 +1,51 @@
 {
-  "configurations": [
-    {
-      "browse": {
-        "databaseFilename": "",
-        "limitSymbolsToIncludedHeaders": true
-      },
-      "includePath": [
-        "/home/yago/pev_ws/devel/include",
-        "/home/yago/cartographer_ws/install_isolated/include",
-        "/home/yago/catkin_ws/devel/include",
-        "/home/yago/nexus_ws/devel/include",
-        "/opt/ros/kinetic/include",
-        "/home/yago/catkin_ws/src/third_party/aprilslam/aprilslam/include",
-        "/home/yago/catkin_ws/src/mit_racecar/racecar/ackermann_cmd_mux/include",
-        "/home/yago/catkin_ws/src/third_party/apriltags_ros/apriltags/include",
-        "/home/yago/catkin_ws/src/third_party/aprilslam/apriltag_mit/include",
-        "/home/yago/catkin_ws/src/third_party/apriltags_ros/apriltags_ros/include",
-        "/home/yago/catkin_ws/src/eyecu/eyecu/include",
-        "/home/yago/catkin_ws/src/eyecu/eyecu_control/include",
-        "/home/yago/catkin_ws/src/hackbike/src/hackbike/include",
-        "/home/yago/catkin_ws/src/third_party/hector_slam/hector_geotiff/include",
-        "/home/yago/catkin_ws/src/third_party/hector_slam/hector_map_tools/include",
-        "/home/yago/catkin_ws/src/third_party/hector_slam/hector_mapping/include",
-        "/home/yago/catkin_ws/src/third_party/hector_slam/hector_marker_drawing/include",
-        "/home/yago/catkin_ws/src/third_party/laser_proc/include",
-        "/home/yago/catkin_ws/src/third_party/loam_velodyne/include",
-        "/home/yago/catkin_ws/src/third_party/px-ros-pkg/drivers/mavlink_serial_client/include",
-        "/home/yago/catkin_ws/src/pacific_alpha/include",
-        "/home/yago/catkin_ws/src/third_party/px-ros-pkg/drivers/px4flow/include",
-        "/home/yago/catkin_ws/src/third_party/px-ros-pkg/px_comm/include",
-        "/home/yago/catkin_ws/src/third_party/rpg_svo/svo/include",
-        "/home/yago/catkin_ws/src/third_party/rpg_svo/svo_ros/include",
-        "/home/yago/catkin_ws/src/third_party/swiftnav_ros/include",
-        "/home/yago/catkin_ws/src/termites_ros/termites_ros/include",
-        "/home/yago/catkin_ws/src/third_party/urg_node/include",
-        "/home/yago/catkin_ws/src/third_party/velodyne/velodyne_driver/include",
-        "/home/yago/catkin_ws/src/third_party/velodyne/velodyne_pointcloud/include",
-        "/home/yago/catkin_ws/src/third_party/vesc/vesc_ackermann/include",
-        "/home/yago/catkin_ws/src/third_party/vesc/vesc_driver/include",
-        "/home/yago/catkin_ws/src/third_party/rpg_vikit/vikit_common/include",
-        "/home/yago/catkin_ws/src/third_party/rpg_vikit/vikit_ros/include",
-        "/home/yago/catkin_ws/src/third_party/tl_detection/waypoint_follower/include",
-        "/usr/include"
-      ],
-      "name": "Linux"
-    }
-  ]
+    "configurations": [
+        {
+            "browse": {
+                "databaseFilename": "",
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "includePath": [
+                "/home/yago/pev_ws/devel/include",
+                "/home/yago/cartographer_ws/install_isolated/include",
+                "/home/yago/catkin_ws/devel/include",
+                "/home/yago/nexus_ws/devel/include",
+                "/opt/ros/kinetic/include",
+                "/home/yago/catkin_ws/src/third_party/aprilslam/aprilslam/include",
+                "/home/yago/catkin_ws/src/mit_racecar/racecar/ackermann_cmd_mux/include",
+                "/home/yago/catkin_ws/src/third_party/apriltags_ros/apriltags/include",
+                "/home/yago/catkin_ws/src/third_party/aprilslam/apriltag_mit/include",
+                "/home/yago/catkin_ws/src/third_party/apriltags_ros/apriltags_ros/include",
+                "/home/yago/catkin_ws/src/eyecu/eyecu/include",
+                "/home/yago/catkin_ws/src/eyecu/eyecu_control/include",
+                "/home/yago/catkin_ws/src/hackbike/src/hackbike/include",
+                "/home/yago/catkin_ws/src/third_party/hector_slam/hector_geotiff/include",
+                "/home/yago/catkin_ws/src/third_party/hector_slam/hector_map_tools/include",
+                "/home/yago/catkin_ws/src/third_party/hector_slam/hector_mapping/include",
+                "/home/yago/catkin_ws/src/third_party/hector_slam/hector_marker_drawing/include",
+                "/home/yago/catkin_ws/src/third_party/laser_proc/include",
+                "/home/yago/catkin_ws/src/third_party/loam_velodyne/include",
+                "/home/yago/catkin_ws/src/third_party/px-ros-pkg/drivers/mavlink_serial_client/include",
+                "/home/yago/catkin_ws/src/pacific_alpha/include",
+                "/home/yago/catkin_ws/src/third_party/px-ros-pkg/drivers/px4flow/include",
+                "/home/yago/catkin_ws/src/third_party/px-ros-pkg/px_comm/include",
+                "/home/yago/catkin_ws/src/third_party/rpg_svo/svo/include",
+                "/home/yago/catkin_ws/src/third_party/rpg_svo/svo_ros/include",
+                "/home/yago/catkin_ws/src/third_party/swiftnav_ros/include",
+                "/home/yago/catkin_ws/src/termites_ros/termites_ros/include",
+                "/home/yago/catkin_ws/src/third_party/urg_node/include",
+                "/home/yago/catkin_ws/src/third_party/velodyne/velodyne_driver/include",
+                "/home/yago/catkin_ws/src/third_party/velodyne/velodyne_pointcloud/include",
+                "/home/yago/catkin_ws/src/third_party/vesc/vesc_ackermann/include",
+                "/home/yago/catkin_ws/src/third_party/vesc/vesc_driver/include",
+                "/home/yago/catkin_ws/src/third_party/rpg_vikit/vikit_common/include",
+                "/home/yago/catkin_ws/src/third_party/rpg_vikit/vikit_ros/include",
+                "/home/yago/catkin_ws/src/third_party/tl_detection/waypoint_follower/include",
+                "/usr/include"
+            ],
+            "name": "Linux",
+            "intelliSenseMode": "gcc-x64"
+        }
+    ],
+    "version": 4
 }
