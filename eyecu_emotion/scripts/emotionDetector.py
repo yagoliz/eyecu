@@ -49,18 +49,19 @@ class emotionDetector(object):
         # Initialize camera and get its info
         self._camera = rospy.get_param("~/cam_device", "/dev/video0")
         self._camera_calibration_path = rospy.get_param("~/camera_info_path", "/home/yago/catkin_ws/src/eyecu/eyecu/config/logitech_webcam_calibration.yaml")
+        self._load_camera_info()
 
         # Get files for face detection
         self._detection_model_path = rospy.get_param("~/detection_model_path", "/trained_models/detection_models/")
         self._detection_model_file = rospy.get_param("~/detection_model_file", "haarcascade_frontalface_default.xml")
         self._detection_model = sys.path[0] + self._detection_model_path + self._detection_model_file
-        self.load_face_detection()
+        self._load_face_detection()
 
         # Get files for emotion detection
         self._emotion_model_path = rospy.get_param("~/emotion_model_path", "/trained_models/")
         self._emotion_model_file = rospy.get_param("~/emotion_model_file", "fer2013_mini_XCEPTION.119-0.65.hdf5")
         self._emotion_model = sys.path[0] + self._emotion_model_path + self._emotion_model_file
-        self.load_emotion_detection()
+        self._load_emotion_detection()
 
         # Hyper-parameters for bounding boxes shape
         self._frame_window = 10
@@ -78,14 +79,50 @@ class emotionDetector(object):
         self._video_capture = WebcamVideoStream(src=self._camera).start()
 
     # Helper functions to load the detectors
-    def load_face_detection(self):
+    def _load_face_detection(self):
         self._face_detection = load_detection_model(self._detection_model)
 
-    def load_emotion_detection(self):
+    def _load_emotion_detection(self):
         self._emotion_classifier = load_model(self._emotion_model, compile=False)
 
-    # Load camera
+    # Load camera information
+    def _load_camera_info(self):
 
+        try:
+            f = open(self._camera_calibration_path)
+            with f as stream:
+                try:
+                    data = yaml.load(stream)
+                    matrix = data['camera_matrix']['data']
+                    self._fx = matrix[0]
+                    self._cx = matrix[2]
+                    self._fy = matrix[4]
+                    self._cy = matrix[5]
+                    self._width = data['image_width']
+                    self.center_x = self._width/2
+                    self._height  = data['image_height']
+                    self.center_y = self._height/2
+
+                except yaml.YAMLError:
+                    print('Error loading yaml file. Loading defaults')
+                    self._load_defaults()
+
+        except IOError:
+            print('Error opening file. Loading defaults')
+            self._load_defaults()
+
+    # This function loads the defaults of a Dell Precision Webcam
+    # Do not use if you have another camera
+    def _load_defaults(self):
+        self._fx = 507.5024270566367
+        self._cx = 322.7029200800868
+        self._fy = 507.2559728776117
+        self._cy = 239.1426526245542
+        self._width  = 640
+        self.center_x = self._width/2
+        self._height = 480
+        self.center_y = self._height/2
+        print('Defaults loaded correctly')
 
 
 # Main function definition

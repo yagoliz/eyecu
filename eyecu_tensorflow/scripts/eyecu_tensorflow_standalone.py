@@ -113,7 +113,7 @@ class FaceTensorFlow:
               print(self._fx)
           except yaml.YAMLError:
               print('Error loading in yaml file. Loading default values')
-              self.load_default()
+              self.load_defaults()
 
     except IOError:
       print('Error opening file. Loading default values')
