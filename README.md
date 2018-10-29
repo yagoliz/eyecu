@@ -71,7 +71,7 @@ foo@bar:~$ roslaunch eyecu start_dynamixel_tracking.launch (for OpenCV or Dlib)
 ```
 
 ## Notes on this version
- This version doesn't use Lidar or Pointcloud. If you want more accuracy to your measurements you can checkout **v1.5-lidar-camera**.
+ This version doesn't use Lidar or Pointcloud. If you want more accuracy in your measurements you can checkout **v1.5-lidar-camera**.
 
 ## Credits
 This work was inspired by Lentin Joseph's [dynamixel tracking](https://github.com/qboticslabs/ros_robotics_projects/tree/master/chapter_2_codes) package.

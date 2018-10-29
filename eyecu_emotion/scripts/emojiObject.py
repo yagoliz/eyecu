@@ -2,7 +2,6 @@
 
 # Main libraries
 import os
-import time
 
 # Installed libraries
 import cv2
@@ -53,6 +52,9 @@ def load_emoji(path_to_images):
         # Create the masks for the emoji
         emoji_mask = emoji_image[:, :, 3]
         emoji_mask_inverted = cv2.bitwise_not(emoji_mask)
+
+        # Save only the first 3 dimensions (to compare against video capture frame)
+        emoji_image = emoji_image[:, :, 0:3]
 
         # Set the values to the object
         emoji_object.set_data((emoji_image, emoji_mask, emoji_mask_inverted))
