@@ -114,9 +114,9 @@ class emotionDetector(object):
                     self._fy = matrix[4]
                     self._cy = matrix[5]
                     self._width = data['image_width']
-                    self.center_x = self._width/2
+                    self._center_image_x = self._width/2
                     self._height  = data['image_height']
-                    self.center_y = self._height/2
+                    self._center_image_y = self._height/2
 
                 except yaml.YAMLError:
                     print('Error loading yaml file. Loading defaults')
@@ -134,9 +134,9 @@ class emotionDetector(object):
         self._fy = 507.2559728776117
         self._cy = 239.1426526245542
         self._width  = 640
-        self.center_x = self._width/2
+        self._center_image_x = self._width/2
         self._height = 480
-        self.center_y = self._height/2
+        self._center_image_y = self._height/2
         print('Defaults loaded correctly')
 
     def process_image(self):
@@ -177,11 +177,11 @@ class emotionDetector(object):
             
             # Check whether emotion is listed within the emojis
             if emotion_label in self._emoji_dictionary:
-                print(self._emoji_dictionary[emotion_label])
-                # with self._emoji_dictionary[emotion_label] as emoji:
                 emoji = self._emoji_dictionary[emotion_label]
+                
                 # Get the dimensions of the face
                 x, y, width, height = face_coordinates
+                self._get_face_distance(x, y, width, height)
 
                 # Get the image and the masks
                 (emoji_image, mask, mask_inverse) = emoji.get_data()
@@ -192,9 +192,7 @@ class emotionDetector(object):
                 # Substract background and foreground
                 roi = image[y:y+width, x:x+width]
                 roi_bg = cv2.bitwise_and(roi, roi, mask=mask_inverse)
-                print(roi_bg.shape)
                 roi_fg = cv2.bitwise_and(emoji_image, emoji_image, mask=mask)
-                print(roi_fg.shape)
 
                 # Create compounded image and substitute it in the colored frame
                 image_destination = cv2.add(roi_bg, roi_fg)
@@ -207,7 +205,21 @@ class emotionDetector(object):
 
             cv2.imshow('window_frame', image)
 
+    def _get_face_distance(self, x, y, width, height):
+        # Get the center of the face
+        center_face_x = x + width / 2.0
+        center_face_y = y + height / 2.0
+
+        # Create DistanceCamera object
+        face_distance = DistanceCamera()
+
+        # Apply least squares to obtain the z distance
+        face_distance.Z = ((self._fx*self._face_width)**2 + (self._fy*self._face_height)**2) / ((width*self._fx*self._face_width) + (height*self._fy*self._face_height))
+
+        face_distance.X = (center_face_x - self._center_image_x) * face_distance.Z/self._fx
+        face_distance.Y = (center_face_y - self._center_image_y) * face_distance.Z/self._fy
         
+        self._face_distance_publisher.publish(face_distance)
 
 # Main function definition
 if __name__ == "__main__":
