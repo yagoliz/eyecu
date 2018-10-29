@@ -6,13 +6,15 @@ import yaml
 import time
 
 # Emoji object
-from emojiObject import *
+from emojiObject import load_emoji
 
 # Installed libraries
 from keras.models import load_model
 import numpy as np
 from statistics import mode
 from imutils.video import WebcamVideoStream
+import cv2
+import numpy as np
 
 # ROS
 import rospy
@@ -144,7 +146,6 @@ class emotionDetector(object):
         # Get the current frame and convert it to gray and rgb images
         image = self._video_capture.read()
         image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
         # Detect faces using haarcascades
         faces = detect_faces(self._face_detection, image_gray)
@@ -176,30 +177,33 @@ class emotionDetector(object):
             
             # Check whether emotion is listed within the emojis
             if emotion_label in self._emoji_dictionary:
-                with self._emoji_dictionary[emotion_label] as emoji:
+                print(self._emoji_dictionary[emotion_label])
+                # with self._emoji_dictionary[emotion_label] as emoji:
+                emoji = self._emoji_dictionary[emotion_label]
+                # Get the dimensions of the face
+                x, y, width, height = face_coordinates
 
-                    # Get the dimensions of the face
-                    x, y, width, height = face_coordinates
+                # Get the image and the masks
+                (emoji_image, mask, mask_inverse) = emoji.get_data()
+                emoji_image = cv2.resize(emoji_image, (width, width), interpolation=cv2.INTER_AREA)
+                mask = cv2.resize(mask, (width, width), interpolation=cv2.INTER_AREA)
+                mask_inverse = cv2.resize(mask_inverse, (width, width), interpolation=cv2.INTER_AREA)
 
-                    # Get the image and the masks
-                    (emoji_image, mask, mask_inverse) = emoji.get_data
-                    emoji_image = cv2.resize(emoji_image, (width, width), interpolation=cv2.INTER_AREA)
-                    mask = cv2.resize(mask, (width, width), interpolation=cv2.INTER_AREA)
-                    mask_inverse = cv2.resize(mask_inverse, (width, width), interpolation=cv2.INTER_AREA)
+                # Substract background and foreground
+                roi = image[y:y+width, x:x+width]
+                roi_bg = cv2.bitwise_and(roi, roi, mask=mask_inverse)
+                print(roi_bg.shape)
+                roi_fg = cv2.bitwise_and(emoji_image, emoji_image, mask=mask)
+                print(roi_fg.shape)
 
-                    # Substract background and foreground
-                    roi = image[y:y+width, x:x+width]
-                    roi_bg = cv2.bitwise_and(roi, roi, mask=mask_inverse)
-                    roi_fg = cv2.bitwise_and(emoji_image, emoji_image, mask=mask)
-
-                    # Create compounded image and substitute it in the colored frame
-                    image_destination = cv2.add(roi_bg, roi_fg)
-                    image[y:y+height, x:x+width] = image_destination
+                # Create compounded image and substitute it in the colored frame
+                image_destination = cv2.add(roi_bg, roi_fg)
+                image[y:y+height, x:x+width] = image_destination
 
         # Show image and fps
         if self._display:
             text = "FPS: " + str(1/(time.time() - time_start))
-            cv2.putText(image, text, (50, 50), self._font, 2, (250, 128, 114), 1, cv2.LINE_8)
+            cv2.putText(image, text, (50, 50), self._font, 1, (250, 128, 114), 1, cv2.LINE_8)
 
             cv2.imshow('window_frame', image)
 
@@ -220,6 +224,7 @@ if __name__ == "__main__":
     # Create the shutdownhook
     stop = False
     def shutdownhook():
+        global stop
         stop = True
 
     rospy.on_shutdown(shutdownhook)
