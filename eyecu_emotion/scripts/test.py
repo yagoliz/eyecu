@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # This test should print the dictionary
     try:
         emoji_dict = load_emoji(path_to_images)
-        print(emoji_dict)
+        print(emoji_dict['angry'])
     except IOError:
         print("Could not load emoji images")
         exit

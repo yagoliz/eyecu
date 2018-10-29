@@ -63,7 +63,7 @@ class FaceTensorFlow:
     self._path_to_labels = sys.path[0] + '/labels' + self._label_name
 
     self._detection_graph = tf.Graph()
-    self.load_graph()
+    self._load_graph()
 
     self._session = tf.Session(graph=self._detection_graph)
 
@@ -76,7 +76,7 @@ class FaceTensorFlow:
     self._cap = WebcamVideoStream(src=self._video_device).start()
 
     # Load values for calibration
-    self.load_camera_info()
+    self._load_camera_info()
 
     # Publisher variable
     self.face_distance = DistanceCamera()
@@ -85,7 +85,7 @@ class FaceTensorFlow:
     self._pub = rospy.Publisher(self._published_topic, DistanceCamera, queue_size=1)
 
   # Graph loading
-  def load_graph(self):
+  def _load_graph(self):
     with self._detection_graph.as_default():
       od_graph_def = tf.GraphDef()
       with tf.gfile.GFile(self._path_to_ckpt, 'rb') as fid:
@@ -93,7 +93,7 @@ class FaceTensorFlow:
         od_graph_def.ParseFromString(serialized_graph)
         tf.import_graph_def(od_graph_def, name='')
 
-  def load_camera_info(self):
+  def _load_camera_info(self):
 
     try:
       f = open(self._camera_info_path)
@@ -113,13 +113,13 @@ class FaceTensorFlow:
               print(self._fx)
           except yaml.YAMLError:
               print('Error loading in yaml file. Loading default values')
-              self.load_defaults()
+              self._load_defaults()
 
     except IOError:
       print('Error opening file. Loading default values')
-      self.load_defaults()
+      self._load_defaults()
 
-  def load_defaults(self):
+  def _load_defaults(self):
 
     self._fx = 507.5024270566367
     self._cx = 322.7029200800868

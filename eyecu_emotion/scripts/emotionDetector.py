@@ -3,6 +3,7 @@
 # Main libraries
 import sys
 import yaml
+import time
 
 # Emoji object
 from emojiObject import *
@@ -63,7 +64,12 @@ class emotionDetector(object):
         self._emotion_model = sys.path[0] + self._emotion_model_path + self._emotion_model_file
         self._load_emotion_detection()
 
+        # Get labels and sizes
+        self._emotion_labels = get_labels('fer2013')
+        self._emotion_target_size = self._emotion_classifier.input_shape[1:3]
+
         # Hyper-parameters for bounding boxes shape
+        self._emotion_window = []
         self._frame_window = 10
         self._emotion_offsets = (20, 40)
 
@@ -74,6 +80,13 @@ class emotionDetector(object):
         # Initialize publishers
         self._face_distance_publisher = rospy.Publisher(self._face_distance_topic, DistanceCamera, queue_size=1)
         self._emotion_publisher = rospy.Publisher(self._emotion_topic, Int8, queue_size=1)
+
+        # Display video
+        self._display = rospy.get_param("~/display", True)
+        self._font = cv2.FONT_HERSHEY_COMPLEX_SMALL
+        if self._display:   
+            cv2.namedWindow('window_frame', cv2.WND_PROP_FULLSCREEN)
+            cv2.setWindowProperty('window_frame', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
         # Start OpenCV video capture
         self._video_capture = WebcamVideoStream(src=self._camera).start()
@@ -124,6 +137,73 @@ class emotionDetector(object):
         self.center_y = self._height/2
         print('Defaults loaded correctly')
 
+    def process_image(self):
+        # Get the starting time (for FPS calculation)
+        time_start = time.time()
+
+        # Get the current frame and convert it to gray and rgb images
+        image = self._video_capture.read()
+        image_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+        # Detect faces using haarcascades
+        faces = detect_faces(self._face_detection, image_gray)
+
+        # Loop over all found faces
+        for face_coordinates in faces:
+            # Get the coordinates once offsets are applied
+            x1, x2, y1, y2 = apply_offsets(face_coordinates, self._emotion_offsets)
+            
+            # Get the face area and resize
+            face_gray = image_gray[y1:y2, x1:x2]
+            try:
+                face_gray = cv2.resize(face_gray, (self._emotion_target_size))
+            except: 
+                continue
+
+            # Do some preprocessing before the actual detection
+            face_gray = preprocess_input(face_gray, True)
+            face_gray = np.expand_dims(face_gray, 0)
+            face_gray = np.expand_dims(face_gray, -1)
+
+            # Detect the emotion
+            emotion_prediction = self._emotion_classifier.predict(face_gray)
+            emotion_probability = np.max(emotion_prediction)
+            emotion_label_arg = np.argmax(emotion_prediction)
+
+            # Get the name of the emotion
+            emotion_label = self._emotion_labels[emotion_label_arg]
+            
+            # Check whether emotion is listed within the emojis
+            if emotion_label in self._emoji_dictionary:
+                with self._emoji_dictionary[emotion_label] as emoji:
+
+                    # Get the dimensions of the face
+                    x, y, width, height = face_coordinates
+
+                    # Get the image and the masks
+                    (emoji_image, mask, mask_inverse) = emoji.get_data
+                    emoji_image = cv2.resize(emoji_image, (width, width), interpolation=cv2.INTER_AREA)
+                    mask = cv2.resize(mask, (width, width), interpolation=cv2.INTER_AREA)
+                    mask_inverse = cv2.resize(mask_inverse, (width, width), interpolation=cv2.INTER_AREA)
+
+                    # Substract background and foreground
+                    roi = image[y:y+width, x:x+width]
+                    roi_bg = cv2.bitwise_and(roi, roi, mask=mask_inverse)
+                    roi_fg = cv2.bitwise_and(emoji_image, emoji_image, mask=mask)
+
+                    # Create compounded image and substitute it in the colored frame
+                    image_destination = cv2.add(roi_bg, roi_fg)
+                    image[y:y+height, x:x+width] = image_destination
+
+        # Show image and fps
+        if self._display:
+            text = "FPS: " + str(1/(time.time() - time_start))
+            cv2.putText(image, text, (50, 50), self._font, 2, (250, 128, 114), 1, cv2.LINE_8)
+
+            cv2.imshow('window_frame', image)
+
+        
 
 # Main function definition
 if __name__ == "__main__":
