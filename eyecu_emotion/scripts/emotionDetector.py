@@ -207,4 +207,30 @@ class emotionDetector(object):
 
 # Main function definition
 if __name__ == "__main__":
-    pass
+    # Initialize node
+    rospy.init_node("emotion_detection")
+
+    # Start the emoji dictionary
+    path_to_images = rospy.get_param("~/path_to_images", "/home/yago/workspaces/catkin_ws/src/eyecu/eyecu_emotion/images")
+    emoji_dictionary = load_emoji(path_to_images)
+
+    # Create the emotion detector object
+    emotion_detector = emotionDetector(emoji_dictionary)
+
+    # Create the shutdownhook
+    stop = False
+    def shutdownhook():
+        stop = True
+
+    rospy.on_shutdown(shutdownhook)
+
+    # Start 
+    while not stop:
+        emotion_detector.process_image()
+
+        # If 'q' key is pressed the loop is broken too
+        if cv2.waitKey(33) & 0xFF == ord('q'):
+            break
+
+    # Destroy al OpenCV windows
+    cv2.destroyAllWindows()
