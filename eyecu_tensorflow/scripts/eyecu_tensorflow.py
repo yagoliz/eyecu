@@ -22,7 +22,7 @@ from sensor_msgs.msg import CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 
 # Custom messages
-from eyecu.msg import DistanceCamera
+from eyecu_msgs.msg import DistanceCamera
 
 # Path to this package
 import rospkg

@@ -47,7 +47,7 @@ Face_Detector::Face_Detector(): it_(nh_)
   camera_sub_ = it_.subscribeCamera(base_input_topic, 1,
     &Face_Detector::imageCb, this);
 
-  face_distance_pub = nh_.advertise<eyecu::DistanceCamera>("/face_distance",10);
+  face_distance_pub = nh_.advertise<eyecu_msgs::DistanceCamera>("/face_distance",10);
 }
 
 Face_Detector::~Face_Detector()

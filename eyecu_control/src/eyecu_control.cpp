@@ -64,7 +64,7 @@ FaceTracker::FaceTracker() {
 }
 
 // Callback function
-void FaceTracker::face_callback(const eyecu::DistanceCamera::ConstPtr& msg) {
+void FaceTracker::face_callback(const eyecu_msgs::DistanceCamera::ConstPtr& msg) {
 
   if (debug) {
     ROS_INFO("Recieved X = [%f], Y = [%f], Z = [%f]", msg->X, msg->Y, msg->Z);
