@@ -14,9 +14,9 @@
         </rosparam>
     </node>
 
-<!-- This will launch the Dynamixel pan controller -->
+    <!-- This will launch the Dynamixel pan controller -->
 
-  <include file="$(find eyecu_control)/launch/start_eye_controller.launch"/>
+    <include file="$(find eyecu_control)/launch/start_eye_controller.launch"/>
 
 
 </launch>

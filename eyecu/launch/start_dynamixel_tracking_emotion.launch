@@ -1,7 +1,7 @@
 <launch>
 
   <!-- Launch tracker -->
-  <include file="$(find eyecu)/launch/eyecu_tensorflow.launch"/>
+  <include file="$(find eyecu)/launch/eyecu_emotion.launch"/>
 
   <!-- Launch serial communication with arduino -->
   <include file="$(find eyecu)/launch/arduino_connect.launch"/>

@@ -1,0 +1,8 @@
+<launch>
+
+<!-- Launch tensorflow based face tracker -->
+<node pkg="eyecu_emotion" type="emotionDetector.py" name="eyecu">
+    <param name="cam_device" value="/dev/video0" />
+</node>
+
+</launch>
