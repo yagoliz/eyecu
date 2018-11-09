@@ -1,10 +1,10 @@
 <launch>
 
   <!-- Launching USB CAM launch files and Dynamixel controllers -->
-  <include file="$(find eyecu)/launch/start_tracking.launch"/>
+  <include file="$(find eyecu)/launch/_face_tracking/start_tracking.launch"/>
 
   <!-- Launch transforms -->
-  <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+  <include file="$(find eyecu)/launch/transforms/static_transforms.launch.xml"/>
 
   <!-- Starting face tracker nodes -->
   <include file="$(find eyecu_control)/launch/start_dynamixel.launch"/>

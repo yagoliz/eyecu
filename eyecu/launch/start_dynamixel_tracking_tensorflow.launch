@@ -1,18 +1,21 @@
 <launch>
 
   <!-- Launch tracker -->
-  <include file="$(find eyecu)/launch/eyecu_tensorflow.launch"/>
+  <include file="$(find eyecu)/launch/face_tracking/eyecu_tensorflow.launch"/>
 
   <!-- Launch serial communication with arduino -->
-  <include file="$(find eyecu)/launch/arduino_connect.launch"/>
+  <arg name="arduino" default="false"/>
+  <group if="$(arg arduino)">
+    <include file="$(find eyecu)/launch/arduino/arduino_connect.launch"/>
+  </group>
 
   <!-- Launch transforms -->
-  <include file="$(find eyecu)/launch/static_transforms.launch.xml"/>
+  <include file="$(find eyecu)/launch/transforms/static_transforms.launch.xml"/>
 
   <!-- Starting face tracker nodes -->
   <include file="$(find eyecu_control)/launch/start_dynamixel.launch"/>
 
-  <!-- <group ns="right_eye">
+  <group ns="right_eye">
     <node name="face_controller" pkg="eyecu_control" type="eyecu_control" output="screen"/>
 
     <node name="motor_state" pkg="eyecu_control" type="motor_state_broadcaster" output="screen">
@@ -20,7 +23,7 @@
       <param name="tilt_link" value="right_eye_tilt_link"/>
       <param name="gaze_link" value="right_eye_gaze_link"/>
     </node>
-  </group> -->
+  </group>
 
   <group ns="left_eye">
     <node name="face_controller" pkg="eyecu_control" type="eyecu_control" output="screen"/>

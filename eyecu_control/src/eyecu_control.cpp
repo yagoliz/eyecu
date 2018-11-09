@@ -18,6 +18,7 @@ FaceTracker::FaceTracker() {
   servomaxx = 1.0;
   servomaxy = 1.0;
   debug = false;
+  reversed_ = false;
 
   try
   {
@@ -29,6 +30,8 @@ FaceTracker::FaceTracker() {
     nh.getParam("debug", debug);
     nh.getParam("target_frame", target_frame);
     nh.getParam("source_frame", source_frame);
+    nh.getParam("reversed", reversed_);
+    premultiplied_ = reversed_ ? -1.0 : 1.0;
 
     ROS_INFO("Successfully Loaded tracking parameters");
   }
@@ -87,7 +90,7 @@ void FaceTracker::face_callback(const eyecu_msgs::DistanceCamera::ConstPtr& msg)
 void FaceTracker::track_face(double x, double y, double z) {
 
   double phi   =  atan2(x,y) - PI/2;
-  double theta = -atan2(z,sqrt(pow(x,2)+pow(y,2)));
+  double theta = premultiplied_ * atan2(z,sqrt(pow(x,2)+pow(y,2)));
 
   // int sign_phi   = (int) (phi  /abs  (phi));
   // int sign_theta = (int) (theta/abs(theta));
