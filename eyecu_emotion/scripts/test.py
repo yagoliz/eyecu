@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from emojiObject import load_emoji, emojiObject
+from emojiObject import load_emoji
 import cv2
 
 if __name__ == "__main__":
@@ -32,4 +32,3 @@ if __name__ == "__main__":
     except IOError:
         print("Could not load emoji images")
         exit
-    

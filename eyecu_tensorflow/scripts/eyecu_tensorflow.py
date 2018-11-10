@@ -4,20 +4,13 @@
 ################################################################################
 #  Standard python libraries
 import numpy as np
-import os
-import six.moves.urllib as urllib
 import sys
 import cv2
 import tensorflow as tf
 
-from collections import defaultdict
-from io import StringIO
-from matplotlib import pyplot as plt
-from PIL import Image
-
 # ROS libraries
 import rospy
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import Image as ImageROS
 from sensor_msgs.msg import CameraInfo
 from cv_bridge import CvBridge, CvBridgeError
 
@@ -40,7 +33,7 @@ class FaceTensorFlow:
   # Initialization function
   def __init__(self):
     # Get ROS parameters
-    self._camera_topic = rospy.get_param('camera_topic','/usb_cam'  )
+    self._camera_topic = rospy.get_param('camera_topic','/front_camera'  )
     self._image_topic  = rospy.get_param('image_topic' ,'/image_raw')
     self._camera_info_topic = rospy.get_param('camera_info_topic', '/camera_info')
     self._published_topic = rospy.get_param('published_topic', '/face_distance')
@@ -74,7 +67,7 @@ class FaceTensorFlow:
     self._height = 480
 
     # Subscribers and publishers
-    self._image_sub = rospy.Subscriber((self._camera_topic + self._image_topic), Image, self.image_callback, queue_size=1)
+    self._image_sub = rospy.Subscriber((self._camera_topic + self._image_topic), ImageROS, self.image_callback, queue_size=1)
     self._camera_info_sub = rospy.Subscriber((self._camera_topic + self._camera_info_topic),
                           CameraInfo, self.camera_info_callback, queue_size=1)
     self._pub = rospy.Publisher(self._published_topic, DistanceCamera, queue_size=1)

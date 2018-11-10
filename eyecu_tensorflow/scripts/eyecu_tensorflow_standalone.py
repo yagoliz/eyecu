@@ -10,11 +10,6 @@ import sys
 import cv2
 from imutils.video import WebcamVideoStream
 
-from collections import defaultdict
-from io import StringIO
-from matplotlib import pyplot as plt
-from PIL import Image
-
 import yaml
 
 # Tensorflow
@@ -47,7 +42,7 @@ class FaceTensorFlow:
 
     # Get ROS parameters
     self._published_topic = rospy.get_param('published_topic', '/face_distance')
-    self._video_device = rospy.get_param('video_device', '/dev/front_camera')
+    self._video_device = rospy.get_param('video_device', '/dev/video0')
 
     self._graph_name  = rospy.get_param('graph_name', '/frozen_inference_graph_face.pb')
     self._label_name  = rospy.get_param('label_name', '/face_label_map.pbtxt')
@@ -99,7 +94,7 @@ class FaceTensorFlow:
       f = open(self._camera_info_path)
       with f as stream:
           try:
-              data = yaml.load(stream)
+              data = yaml.safe_load(stream)
               matrix = data['camera_matrix']['data']
               self._fx = matrix[0]
               self._cx = matrix[2]
@@ -180,8 +175,7 @@ class FaceTensorFlow:
 
         if current_face > biggest_face:
           max_face = i
-          biggest_face = current_face
-          
+          biggest_face = current_face   
 
     if max_face >= 0:
       xmin = boxes[max_face][1]*self._width
