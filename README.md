@@ -1,5 +1,7 @@
 # I See You
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/b67292cf38884ae3b8f9624e0801ff36)](https://app.codacy.com/app/yagoliz/eyecu?utm_source=github.com&utm_medium=referral&utm_content=yagoliz/eyecu&utm_campaign=Badge_Grade_Dashboard)
+
 Package that will allow you to control 4 separate dynamixels as if there were eyes! [Checkout the video [here](https://vimeo.com/user40509209/review/282109443/f283ae8254)]
 
 Here's a sample pic of the eyes:
