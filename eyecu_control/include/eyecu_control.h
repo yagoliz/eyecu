@@ -55,6 +55,9 @@ class FaceTracker {
   tf2::Stamped<Eigen::Vector3d> t_in;
   tf2::Stamped<Eigen::Vector3d> t_out;
 
+  // Reversed actuator
+  bool reversed_;
+  float premultiplied_;
   public:
 
     FaceTracker();

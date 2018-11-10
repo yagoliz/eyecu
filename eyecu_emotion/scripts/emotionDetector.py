@@ -11,10 +11,8 @@ from emojiObject import load_emoji
 # Installed libraries
 from keras.models import load_model
 import numpy as np
-from statistics import mode
 from imutils.video import WebcamVideoStream
 import cv2
-import numpy as np
 
 # ROS
 import rospy
@@ -30,8 +28,6 @@ from eyecu.msg import DistanceCamera
 # Utilities
 from utils.datasets import get_labels
 from utils.inference import detect_faces
-from utils.inference import draw_text
-from utils.inference import draw_bounding_box
 from utils.inference import apply_offsets
 from utils.inference import load_detection_model
 from utils.preprocessor import preprocess_input
@@ -86,7 +82,7 @@ class emotionDetector(object):
         # Display video
         self._display = rospy.get_param("~/display", True)
         self._font = cv2.FONT_HERSHEY_COMPLEX_SMALL
-        if self._display:   
+        if self._display:
             cv2.namedWindow('window_frame', cv2.WND_PROP_FULLSCREEN)
             cv2.setWindowProperty('window_frame', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
 
@@ -107,7 +103,7 @@ class emotionDetector(object):
             f = open(self._camera_calibration_path)
             with f as stream:
                 try:
-                    data = yaml.load(stream)
+                    data = yaml.safe_load(stream)
                     matrix = data['camera_matrix']['data']
                     self._fx = matrix[0]
                     self._cx = matrix[2]
@@ -159,7 +155,7 @@ class emotionDetector(object):
             face_gray = image_gray[y1:y2, x1:x2]
             try:
                 face_gray = cv2.resize(face_gray, (self._emotion_target_size))
-            except: 
+            except:
                 continue
 
             # Do some preprocessing before the actual detection
@@ -169,7 +165,7 @@ class emotionDetector(object):
 
             # Detect the emotion
             emotion_prediction = self._emotion_classifier.predict(face_gray)
-            emotion_probability = np.max(emotion_prediction)
+            # emotion_probability = np.max(emotion_prediction)
             emotion_label_arg = np.argmax(emotion_prediction)
 
             # Get the name of the emotion
@@ -241,7 +237,7 @@ if __name__ == "__main__":
 
     rospy.on_shutdown(shutdownhook)
 
-    # Start 
+    # Start
     while not stop:
         emotion_detector.process_image()
 

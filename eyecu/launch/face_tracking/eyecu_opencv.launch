@@ -3,7 +3,7 @@
 
 <!-- Launching USB CAM launch files and Dynamixel controllers -->
 
-  <include file="$(find eyecu)/launch/start_usb_cam.launch"/>
+  <include file="$(find eyecu)/launch/usb_cam/start_usb_cam.launch"/>
 
 
 <!-- Starting face tracker node -->

@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# Main libraries
-import os
-
 # Installed libraries
 import cv2
 import numpy as np
@@ -31,7 +28,7 @@ class emojiObject(object):
 # Emoji loader function
 def load_emoji(path_to_images):
     '''
-    This function returns an emoji list dictionary given the path to the 
+    This function returns an emoji list dictionary given the path to the
     images as a string
     '''
     # Create empty dictionary
@@ -45,7 +42,7 @@ def load_emoji(path_to_images):
 
         # Load image
         filename = path_to_images + "/" + emoji + ".png"
-        emoji_image = cv2.imread(filename, -1) 
+        emoji_image = cv2.imread(filename, -1)
         if not isinstance(emoji_image, np.ndarray):
             raise IOError("Error loading image")
 
@@ -59,6 +56,6 @@ def load_emoji(path_to_images):
         # Set the values to the object
         emoji_object.set_data((emoji_image, emoji_mask, emoji_mask_inverted))
         emoji_dictionary[emoji] = emoji_object
-        
+
     # Return the completed dictionary
     return emoji_dictionary

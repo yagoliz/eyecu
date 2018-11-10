@@ -7,12 +7,13 @@
 
     <rosparam file="$(find eyecu_control)/config/servo_param.yaml" command="load"/>
 
-    <node name="tilt_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py"
-          args="--manager=dxl_manager
-                --port eye_port
-                right_eye/pan_controller
-                right_eye/tilt_controller
-                left_eye/pan_controller
-                left_eye/tilt_controller"
-          output="screen"/>
+      <node name="tilt_controller_spawner" pkg="dynamixel_controllers" type="controller_spawner.py" 
+          args="--manager=dxl_manager 
+                --port eye_port 
+                right_eye/pan_controller 
+                right_eye/tilt_controller 
+                left_eye/pan_controller 
+                left_eye/tilt_controller" 
+          output="screen"/> 
+
 </launch>

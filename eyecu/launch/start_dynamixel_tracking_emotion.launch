@@ -1,7 +1,13 @@
 <launch>
 
-  <!-- Launching USB CAM launch files and Dynamixel controllers -->
-  <include file="$(find eyecu)/launch/_face_tracking/start_tracking.launch"/>
+  <!-- Launch tracker -->
+  <include file="$(find eyecu)/launch/face_tracking/eyecu_emotion.launch"/>
+
+  <!-- Launch serial communication with arduino -->
+  <arg name="arduino" default="false"/>
+  <group if="$(arg arduino)">
+    <include file="$(find eyecu)/launch/arduino/arduino_connect.launch"/>
+  </group>
 
   <!-- Launch transforms -->
   <include file="$(find eyecu)/launch/transforms/static_transforms.launch.xml"/>
