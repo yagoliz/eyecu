@@ -23,7 +23,7 @@ rospack = rospkg.RosPack()
 sys.path.insert(0, rospack.get_path('eyecu_emotion'))
 
 # Custom ROS messages
-from eyecu.msg import DistanceCamera
+from eyecu_msgs.msg import DistanceCamera
 
 # Utilities
 from utils.datasets import get_labels

@@ -97,7 +97,7 @@ void Face_Detector::imageCb(const sensor_msgs::ImageConstPtr& img, const sensor_
 void Face_Detector::detectAndDraw( Mat& img)
 {
   double t = 0;
-  double scale = 1;
+  double scale = 2;
   vector<dlib::rectangle> faces;
 
   const static Scalar colors[] =
