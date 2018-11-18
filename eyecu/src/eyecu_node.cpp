@@ -162,12 +162,10 @@ void Face_Detector::detectAndDraw( Mat& img, CascadeClassifier& cascade)
   Mat gray, smallImg;
 
   cvtColor( img, gray, COLOR_BGR2GRAY );
-  double f = 1 / scale ;
-  resize( gray, smallImg, Size(), f, f, INTER_LINEAR );
-  equalizeHist( smallImg, smallImg );
+  equalizeHist( gray, gray );
 
   t = (double)cvGetTickCount();
-  cascade.detectMultiScale( smallImg, faces,
+  cascade.detectMultiScale( gray, faces,
       1.1, 15, 0
       |CASCADE_SCALE_IMAGE,
       Size(30, 30) );
